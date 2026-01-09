@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ScanLine, Clock, Star, X, ArrowLeft } from 'lucide-react';
+import { Search, ScanLine, Clock, Star, X, ArrowLeft, Loader2, Check } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { FoodCard } from '@/components/FoodCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useFoods } from '@/hooks/useNutritionStore';
 import { Food } from '@/types/nutrition';
+import { fetchProductByBarcode, convertToFoodData, OpenFoodFactsProduct } from '@/lib/openFoodFacts';
+import { toast } from 'sonner';
 
 type TabType = 'recent' | 'search' | 'scan';
 
@@ -18,8 +20,10 @@ export default function LogFood() {
   
   const [activeTab, setActiveTab] = useState<TabType>('recent');
   const [searchQuery, setSearchQuery] = useState('');
+  const [scannedProduct, setScannedProduct] = useState<OpenFoodFactsProduct | null>(null);
+  const [isLookingUp, setIsLookingUp] = useState(false);
   
-  const { getRecentFoods, getFrequentFoods, getFavorites, searchFoods, findByBarcode } = useFoods();
+  const { getRecentFoods, getFavorites, searchFoods, findByBarcode, addFood } = useFoods();
   
   const recentFoods = getRecentFoods(20);
   const favorites = getFavorites();
@@ -33,6 +37,66 @@ export default function LogFood() {
     navigate('/foods/new');
   };
 
+  const handleBarcodeScan = async (barcode: string) => {
+    // First check if we already have this food saved
+    const existingFood = findByBarcode(barcode);
+    if (existingFood) {
+      handleFoodSelect(existingFood);
+      return;
+    }
+
+    // Look up in Open Food Facts
+    setIsLookingUp(true);
+    const result = await fetchProductByBarcode(barcode);
+    setIsLookingUp(false);
+
+    if (result.success && result.product) {
+      setScannedProduct(result.product);
+    } else {
+      toast.error(result.error || 'Product not found');
+      navigate(`/foods/new?barcode=${barcode}&meal=${meal}`);
+    }
+  };
+
+  const handleSaveScannedProduct = async () => {
+    if (!scannedProduct) return;
+
+    const foodData = convertToFoodData(scannedProduct);
+    const newFood = await addFood({
+      name: foodData.name,
+      brand: foodData.brand,
+      barcode: foodData.barcode,
+      nutritionBasis: foodData.nutritionBasis,
+      macrosPer100g: foodData.macrosPer100g,
+      servingGrams: foodData.servingGrams,
+      isFavorite: false,
+    });
+
+    if (newFood) {
+      toast.success('Food saved to library');
+      handleFoodSelect(newFood);
+    } else {
+      toast.error('Failed to save food');
+    }
+  };
+
+  const handleEditScannedProduct = () => {
+    if (!scannedProduct) return;
+    const foodData = convertToFoodData(scannedProduct);
+    // Navigate to food editor with pre-filled data
+    const params = new URLSearchParams({
+      barcode: foodData.barcode || '',
+      name: foodData.name,
+      brand: foodData.brand || '',
+      calories: String(foodData.macrosPer100g?.calories || 0),
+      protein: String(foodData.macrosPer100g?.protein || 0),
+      carbs: String(foodData.macrosPer100g?.carbs || 0),
+      fat: String(foodData.macrosPer100g?.fat || 0),
+      meal,
+    });
+    navigate(`/foods/new?${params.toString()}`);
+  };
+
   const tabs = [
     { key: 'recent' as TabType, icon: Clock, label: 'Recent' },
     { key: 'search' as TabType, icon: Search, label: 'Search' },
@@ -41,7 +105,7 @@ export default function LogFood() {
 
   return (
     <div className="min-h-screen bg-background pb-28">
-      {/* Header - KovaFit style */}
+      {/* Header */}
       <div className="px-5 pt-12 pb-4 safe-top">
         <div className="flex items-center gap-3">
           <button 
@@ -63,7 +127,10 @@ export default function LogFood() {
           {tabs.map(({ key, icon: Icon, label }) => (
             <button
               key={key}
-              onClick={() => setActiveTab(key)}
+              onClick={() => {
+                setActiveTab(key);
+                setScannedProduct(null);
+              }}
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-sm transition-all ${
                 activeTab === key
                   ? 'bg-gradient-primary text-white shadow-md'
@@ -189,22 +256,127 @@ export default function LogFood() {
               exit={{ opacity: 0, x: 20 }}
               className="space-y-4"
             >
-              <BarcodeScanner 
-                onScan={(barcode) => {
-                  const food = findByBarcode(barcode);
-                  if (food) {
-                    handleFoodSelect(food);
-                  } else {
-                    navigate(`/foods/new?barcode=${barcode}&meal=${meal}`);
-                  }
-                }}
-              />
+              {isLookingUp ? (
+                <div className="text-center py-12 bg-card rounded-2xl">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+                  <p className="text-muted-foreground">Looking up product...</p>
+                </div>
+              ) : scannedProduct ? (
+                <ScannedProductPreview
+                  product={scannedProduct}
+                  onConfirm={handleSaveScannedProduct}
+                  onEdit={handleEditScannedProduct}
+                  onCancel={() => setScannedProduct(null)}
+                />
+              ) : (
+                <BarcodeScanner onScan={handleBarcodeScan} />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
       <BottomNav />
+    </div>
+  );
+}
+
+function ScannedProductPreview({
+  product,
+  onConfirm,
+  onEdit,
+  onCancel,
+}: {
+  product: OpenFoodFactsProduct;
+  onConfirm: () => void;
+  onEdit: () => void;
+  onCancel: () => void;
+}) {
+  const nutriments = product.nutriments || {};
+  const foodData = convertToFoodData(product);
+
+  return (
+    <div className="glass-card p-5 space-y-4">
+      <div className="flex items-start gap-4">
+        {product.image_url && (
+          <img
+            src={product.image_url}
+            alt={product.product_name}
+            className="w-20 h-20 rounded-xl object-cover bg-muted"
+          />
+        )}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-foreground dark:text-white/95 truncate">
+            {product.product_name || 'Unknown Product'}
+          </h3>
+          {product.brands && (
+            <p className="text-sm text-muted-foreground dark:text-white/50 truncate">
+              {product.brands}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground dark:text-white/40 mt-1">
+            Barcode: {product.code}
+          </p>
+        </div>
+      </div>
+
+      {/* Nutrition per 100g */}
+      <div className="bg-black/10 dark:bg-black/20 rounded-2xl p-4">
+        <p className="text-xs text-muted-foreground dark:text-white/40 uppercase tracking-wider mb-3">
+          Per 100g
+        </p>
+        <div className="grid grid-cols-4 gap-2 text-center">
+          <div>
+            <div className="text-lg font-bold text-calories font-tabular">
+              {foodData.macrosPer100g?.calories || 0}
+            </div>
+            <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Cal</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-protein font-tabular">
+              {foodData.macrosPer100g?.protein || 0}g
+            </div>
+            <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Protein</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-carbs font-tabular">
+              {foodData.macrosPer100g?.carbs || 0}g
+            </div>
+            <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Carbs</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-fat font-tabular">
+              {foodData.macrosPer100g?.fat || 0}g
+            </div>
+            <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Fat</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          onClick={onCancel}
+          className="flex-1"
+        >
+          Scan Again
+        </Button>
+        <Button
+          variant="outline"
+          onClick={onEdit}
+          className="flex-1"
+        >
+          Edit
+        </Button>
+        <Button
+          onClick={onConfirm}
+          className="flex-1 bg-gradient-primary"
+        >
+          <Check className="w-4 h-4 mr-1" />
+          Save
+        </Button>
+      </div>
     </div>
   );
 }
