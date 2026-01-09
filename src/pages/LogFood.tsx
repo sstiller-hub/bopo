@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ScanLine, Clock, Star, X, ArrowLeft, Loader2, Check } from 'lucide-react';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useFoods } from '@/hooks/useNutritionStore';
 import { Food } from '@/types/nutrition';
-import { fetchProductByBarcode, convertToFoodData, OpenFoodFactsProduct } from '@/lib/openFoodFacts';
+import { fetchProductByBarcode, searchProducts, convertToFoodData, OpenFoodFactsProduct } from '@/lib/openFoodFacts';
 import { toast } from 'sonner';
 
 type TabType = 'recent' | 'search' | 'scan';
@@ -22,12 +22,47 @@ export default function LogFood() {
   const [searchQuery, setSearchQuery] = useState('');
   const [scannedProduct, setScannedProduct] = useState<OpenFoodFactsProduct | null>(null);
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [apiSearchResults, setApiSearchResults] = useState<OpenFoodFactsProduct[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
   
   const { getRecentFoods, getFavorites, searchFoods, findByBarcode, addFood } = useFoods();
   
   const recentFoods = getRecentFoods(20);
   const favorites = getFavorites();
-  const searchResults = searchQuery.length >= 2 ? searchFoods(searchQuery) : [];
+  const localSearchResults = searchQuery.length >= 2 ? searchFoods(searchQuery) : [];
+
+  // Debounced API search
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setApiSearchResults([]);
+      return;
+    }
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      const result = await searchProducts(searchQuery, 15);
+      setIsSearching(false);
+      if (result.success) {
+        setApiSearchResults(result.products);
+      }
+    }, 500);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  const handleApiProductSelect = (product: OpenFoodFactsProduct) => {
+    setScannedProduct(product);
+    setActiveTab('scan'); // Reuse the scan tab's preview UI
+  };
 
   const handleFoodSelect = (food: Food) => {
     navigate(`/confirm?foodId=${food.id}&meal=${meal}`);
@@ -225,20 +260,55 @@ export default function LogFood() {
 
               {/* Results */}
               {searchQuery.length >= 2 ? (
-                searchResults.length > 0 ? (
-                  <div className="space-y-2">
-                    {searchResults.map(food => (
-                      <FoodCard key={food.id} food={food} onClick={() => handleFoodSelect(food)} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-card rounded-2xl">
-                    <p className="text-muted-foreground mb-4">No foods found for "{searchQuery}"</p>
-                    <Button onClick={handleCreateFood} className="bg-gradient-primary">
+                <div className="space-y-4">
+                  {/* Local library results */}
+                  {localSearchResults.length > 0 && (
+                    <section>
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+                        Your Library
+                      </h3>
+                      <div className="space-y-2">
+                        {localSearchResults.map(food => (
+                          <FoodCard key={food.id} food={food} onClick={() => handleFoodSelect(food)} />
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* API search results */}
+                  <section>
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+                      Open Food Facts
+                    </h3>
+                    {isSearching ? (
+                      <div className="flex items-center justify-center py-8 bg-card rounded-2xl">
+                        <Loader2 className="w-5 h-5 animate-spin text-primary mr-2" />
+                        <span className="text-muted-foreground text-sm">Searching...</span>
+                      </div>
+                    ) : apiSearchResults.length > 0 ? (
+                      <div className="space-y-2">
+                        {apiSearchResults.map(product => (
+                          <ApiProductCard 
+                            key={product.code} 
+                            product={product} 
+                            onClick={() => handleApiProductSelect(product)} 
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 bg-card rounded-2xl text-sm text-muted-foreground">
+                        No online results found
+                      </div>
+                    )}
+                  </section>
+
+                  {/* Create new option */}
+                  <div className="pt-2">
+                    <Button onClick={handleCreateFood} variant="outline" className="w-full">
                       Create New Food
                     </Button>
                   </div>
-                )
+                </div>
               ) : (
                 <div className="text-center py-12 text-muted-foreground bg-card rounded-2xl">
                   Type at least 2 characters to search
@@ -459,5 +529,45 @@ function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
         Point your camera at a barcode
       </p>
     </div>
+  );
+}
+
+function ApiProductCard({ 
+  product, 
+  onClick 
+}: { 
+  product: OpenFoodFactsProduct; 
+  onClick: () => void;
+}) {
+  const foodData = convertToFoodData(product);
+  const macros = foodData.macrosPer100g;
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left bg-card rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+    >
+      <div className="flex items-center gap-3">
+        {product.image_url && (
+          <img
+            src={product.image_url}
+            alt={product.product_name}
+            className="w-12 h-12 rounded-xl object-cover bg-muted flex-shrink-0"
+          />
+        )}
+        <div className="flex-1 min-w-0">
+          <h4 className="font-medium text-foreground truncate">
+            {product.product_name || 'Unknown'}
+          </h4>
+          {product.brands && (
+            <p className="text-xs text-muted-foreground truncate">{product.brands}</p>
+          )}
+        </div>
+        <div className="text-right flex-shrink-0">
+          <div className="text-sm font-semibold text-calories">{macros?.calories || 0} kcal</div>
+          <div className="text-[10px] text-muted-foreground">per 100g</div>
+        </div>
+      </div>
+    </button>
   );
 }
