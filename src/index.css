@@ -78,73 +78,73 @@
   }
 
   .dark {
-    /* Deep charcoal background with warm undertone */
-    --background: 15 10% 10%;
-    --foreground: 30 10% 95%;
+    /* Near-black background like KovaFit */
+    --background: 0 0% 7%;
+    --foreground: 0 0% 95%;
 
-    /* Cards slightly elevated */
-    --card: 15 8% 14%;
-    --card-foreground: 30 10% 95%;
+    /* Cards - warm brownish dark gray */
+    --card: 20 8% 13%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 15 8% 14%;
-    --popover-foreground: 30 10% 95%;
+    --popover: 20 8% 13%;
+    --popover-foreground: 0 0% 95%;
 
-    /* Primary - warm coral maintained */
-    --primary: 10 70% 58%;
+    /* Primary - warm coral/salmon */
+    --primary: 10 65% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 10 40% 20%;
+    --primary-soft: 10 30% 18%;
 
     /* Secondary */
-    --secondary: 15 8% 18%;
-    --secondary-foreground: 30 10% 85%;
+    --secondary: 20 6% 16%;
+    --secondary-foreground: 0 0% 80%;
 
-    /* Muted */
-    --muted: 15 8% 18%;
-    --muted-foreground: 30 10% 55%;
+    /* Muted - for subtle text and backgrounds */
+    --muted: 20 6% 16%;
+    --muted-foreground: 0 0% 50%;
 
-    /* Accent - warm tint */
-    --accent: 10 30% 20%;
-    --accent-foreground: 10 70% 70%;
+    /* Accent */
+    --accent: 20 10% 18%;
+    --accent-foreground: 10 60% 65%;
 
     /* Destructive */
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders - subtle warm gray */
-    --border: 15 8% 20%;
-    --input: 15 8% 20%;
-    --ring: 10 70% 58%;
+    /* Borders - very subtle */
+    --border: 20 6% 18%;
+    --input: 20 6% 18%;
+    --ring: 10 65% 55%;
 
-    /* Macro colors for dark mode - slightly brighter */
-    --calories: 10 70% 60%;
-    --calories-light: 10 40% 20%;
-    --protein: 350 65% 60%;
-    --protein-light: 350 40% 20%;
-    --carbs: 200 70% 55%;
-    --carbs-light: 200 40% 20%;
-    --fat: 40 85% 58%;
-    --fat-light: 40 40% 20%;
+    /* Macro colors for dark mode */
+    --calories: 10 65% 58%;
+    --calories-light: 10 25% 16%;
+    --protein: 350 60% 58%;
+    --protein-light: 350 30% 16%;
+    --carbs: 200 65% 55%;
+    --carbs-light: 200 30% 16%;
+    --fat: 40 80% 55%;
+    --fat-light: 40 30% 16%;
 
-    /* Success */
-    --success: 150 60% 50%;
-    --success-light: 150 40% 18%;
+    /* Success - green for percentages */
+    --success: 145 55% 48%;
+    --success-light: 145 30% 16%;
 
     /* Warning */
-    --warning: 35 90% 58%;
+    --warning: 35 85% 55%;
 
-    /* Gradient for cards in dark mode */
-    --gradient-primary: linear-gradient(135deg, hsl(10, 70%, 55%) 0%, hsl(5, 65%, 45%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(10, 40%, 20%) 0%, hsl(10, 35%, 16%) 100%);
+    /* Gradient for hero card - warm coral gradient like KovaFit */
+    --gradient-primary: linear-gradient(135deg, hsl(12, 60%, 48%) 0%, hsl(8, 55%, 40%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(15, 35%, 22%) 0%, hsl(12, 30%, 18%) 100%);
 
-    /* Sidebar */
-    --sidebar-background: 15 8% 12%;
-    --sidebar-foreground: 30 10% 85%;
-    --sidebar-primary: 10 70% 58%;
+    /* Sidebar / Bottom nav */
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 75%;
+    --sidebar-primary: 10 65% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 10 30% 18%;
-    --sidebar-accent-foreground: 10 70% 70%;
-    --sidebar-border: 15 8% 18%;
-    --sidebar-ring: 10 70% 58%;
+    --sidebar-accent: 20 6% 14%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 20 6% 16%;
+    --sidebar-ring: 10 65% 55%;
   }
 }
 
@@ -228,8 +228,16 @@
     background: linear-gradient(180deg, hsl(15, 80%, 92%) 0%, hsl(10, 70%, 85%) 100%);
   }
 
+  .dark .bg-gradient-card {
+    background: linear-gradient(180deg, hsl(15, 30%, 20%) 0%, hsl(12, 25%, 16%) 100%);
+  }
+
   .bg-gradient-primary {
-    background: linear-gradient(135deg, hsl(10, 70%, 60%) 0%, hsl(5, 65%, 50%) 100%);
+    background: linear-gradient(135deg, hsl(12, 58%, 52%) 0%, hsl(8, 52%, 42%) 100%);
+  }
+
+  .dark .bg-gradient-primary {
+    background: linear-gradient(135deg, hsl(12, 55%, 48%) 0%, hsl(8, 50%, 38%) 100%);
   }
 
   /* Number font for macros */
