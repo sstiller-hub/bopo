@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Save, RefreshCw, LogOut, ChevronRight } from 'lucide-react';
+import { Save, RefreshCw, LogOut, ChevronRight, Sun, Moon, Monitor } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { UnitToggle } from '@/components/UnitToggle';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSettings } from '@/hooks/useNutritionStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { Macros, defaultSettings } from '@/types/nutrition';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -17,6 +18,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { settings, updateSettings } = useSettings();
+  const { theme, setTheme } = useTheme();
   
   const [targets, setTargets] = useState<Macros>(settings.dailyTargets);
   const [trainingDay, setTrainingDay] = useState<Macros | null>(settings.templates?.trainingDay || null);
@@ -68,10 +70,62 @@ export default function SettingsPage() {
       </div>
 
       <main className="px-4 space-y-4">
+        {/* Theme Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card rounded-2xl p-4 shadow-sm"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-semibold text-foreground">Appearance</div>
+              <div className="text-sm text-muted-foreground">
+                Choose your theme
+              </div>
+            </div>
+            <div className="flex gap-1 p-1 bg-muted rounded-xl">
+              <button
+                onClick={() => setTheme('light')}
+                className={cn(
+                  'p-2.5 rounded-lg transition-all',
+                  theme === 'light' 
+                    ? 'bg-card shadow-sm text-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Sun className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setTheme('dark')}
+                className={cn(
+                  'p-2.5 rounded-lg transition-all',
+                  theme === 'dark' 
+                    ? 'bg-card shadow-sm text-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Moon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setTheme('system')}
+                className={cn(
+                  'p-2.5 rounded-lg transition-all',
+                  theme === 'system' 
+                    ? 'bg-card shadow-sm text-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Monitor className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Default Unit Card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
           className="bg-card rounded-2xl p-4 shadow-sm"
         >
           <div className="flex items-center justify-between">
