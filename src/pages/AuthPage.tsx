@@ -74,35 +74,38 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm"
       >
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 bg-gradient-primary rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-primary/20">
+            <span className="text-2xl font-bold text-white">M</span>
+          </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">
             Macro Tracker
           </h1>
           <p className="text-muted-foreground">
-            {isLogin ? 'Sign in to continue' : 'Create your account'}
+            {isLogin ? 'Welcome back' : 'Create your account'}
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 h-12"
+                className="pl-12 h-14 rounded-xl bg-card border-border/50"
                 autoComplete="email"
               />
             </div>
@@ -112,16 +115,16 @@ export default function AuthPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 h-12"
+                className="pl-12 h-14 rounded-xl bg-card border-border/50"
                 autoComplete={isLogin ? 'current-password' : 'new-password'}
               />
             </div>
@@ -133,7 +136,7 @@ export default function AuthPage() {
           <Button
             type="submit"
             size="lg"
-            className="w-full h-12"
+            className="w-full h-14 rounded-xl text-base font-semibold bg-gradient-primary hover:opacity-90 shadow-lg shadow-primary/20"
             disabled={loading}
           >
             {loading ? (
@@ -148,11 +151,11 @@ export default function AuthPage() {
         </form>
 
         {/* Toggle */}
-        <div className="mt-6 text-center">
+        <div className="mt-8 text-center">
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-primary hover:underline"
+            className="text-sm text-primary font-medium hover:underline"
           >
             {isLogin
               ? "Don't have an account? Sign up"

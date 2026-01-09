@@ -3,7 +3,6 @@ import { ChevronDown, Plus, Trash2, Copy, Edit2 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Entry, Macros, MealType, gramsToOunces } from '@/types/nutrition';
-import { Button } from '@/components/ui/button';
 
 interface MealSectionProps {
   title: string;
@@ -39,11 +38,11 @@ export function MealSection({
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden">
+    <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
       >
         <div className="flex items-center gap-3">
           <span className="font-semibold text-foreground">{title}</span>
@@ -54,8 +53,8 @@ export function MealSection({
         <div className="flex items-center gap-4">
           {/* Mini macro summary */}
           <div className="flex items-center gap-3 text-xs font-tabular">
-            <span className="text-calories font-medium">{Math.round(totals.calories)}</span>
-            <span className="text-muted-foreground">•</span>
+            <span className="text-calories font-semibold">{Math.round(totals.calories)}</span>
+            <span className="text-muted-foreground/50">•</span>
             <span className="text-protein">{Math.round(totals.protein)}P</span>
             <span className="text-carbs">{Math.round(totals.carbs)}C</span>
             <span className="text-fat">{Math.round(totals.fat)}F</span>
@@ -79,13 +78,13 @@ export function MealSection({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="border-t border-border">
+            <div className="border-t border-border/50">
               {entries.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground text-sm">
                   No foods logged yet
                 </div>
               ) : (
-                <div className="divide-y divide-border">
+                <div className="divide-y divide-border/50">
                   {entries.map((entry) => (
                     <div
                       key={entry.id}
@@ -108,8 +107,8 @@ export function MealSection({
                           </div>
                         </div>
                         <div className="flex items-center gap-3 text-xs font-tabular shrink-0 ml-4">
-                          <span className="text-calories font-medium">{Math.round(entry.computedMacros.calories)}</span>
-                          <span className="text-muted-foreground">|</span>
+                          <span className="text-calories font-semibold">{Math.round(entry.computedMacros.calories)}</span>
+                          <span className="text-muted-foreground/40">|</span>
                           <span className="text-protein">{Math.round(entry.computedMacros.protein)}</span>
                           <span className="text-carbs">{Math.round(entry.computedMacros.carbs)}</span>
                           <span className="text-fat">{Math.round(entry.computedMacros.fat)}</span>
@@ -145,7 +144,7 @@ export function MealSection({
               {/* Add food button */}
               <button
                 onClick={() => onAddFood(meal)}
-                className="w-full p-3 flex items-center justify-center gap-2 text-primary font-medium hover:bg-primary/5 transition-colors border-t border-border"
+                className="w-full p-3 flex items-center justify-center gap-2 text-primary font-medium hover:bg-primary/5 transition-colors border-t border-border/50"
               >
                 <Plus className="w-4 h-4" />
                 Add Food

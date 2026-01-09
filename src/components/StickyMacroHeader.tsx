@@ -25,21 +25,20 @@ function MacroItem({ label, remaining, consumed, target, unit = 'g', colorClass,
   return (
     <div className="flex-1 text-center">
       <div className={cn(
-        'rounded-xl p-2 transition-colors',
+        'rounded-2xl p-3 transition-colors',
         bgClass
       )}>
         <div className={cn(
-          'text-xl font-bold font-tabular leading-none',
+          'text-2xl font-bold font-tabular leading-none',
           isOver ? 'text-destructive' : colorClass
         )}>
           {Math.round(remaining)}
-          {unit !== 'kcal' && <span className="text-xs font-medium ml-0.5">{unit}</span>}
         </div>
-        <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">
+        <div className="text-[10px] text-foreground/60 font-medium uppercase tracking-wider mt-1">
           {label}
         </div>
         {/* Mini progress bar */}
-        <div className="h-1 rounded-full bg-background/50 mt-1.5 overflow-hidden">
+        <div className="h-1 rounded-full bg-foreground/10 mt-2 overflow-hidden">
           <motion.div
             className={cn(
               'h-full rounded-full',
@@ -51,8 +50,8 @@ function MacroItem({ label, remaining, consumed, target, unit = 'g', colorClass,
           />
         </div>
       </div>
-      <div className="text-[10px] text-muted-foreground mt-1 font-tabular">
-        {Math.round(consumed)}/{target}
+      <div className="text-[10px] text-muted-foreground mt-1.5 font-tabular">
+        {Math.round(consumed)} / {target}
       </div>
     </div>
   );
@@ -61,21 +60,24 @@ function MacroItem({ label, remaining, consumed, target, unit = 'g', colorClass,
 export function StickyMacroHeader({ consumed, targets, remaining }: StickyMacroHeaderProps) {
   return (
     <motion.div 
-      className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border safe-top safe-x pb-3"
+      className="sticky top-0 z-40 bg-background safe-top safe-x pb-4"
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="pt-3">
-        {/* Remaining label */}
-        <div className="text-center mb-2">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-            Remaining Today
-          </span>
+      {/* Title */}
+      <div className="pt-4 pb-3">
+        <h1 className="text-2xl font-bold text-foreground">Today</h1>
+      </div>
+
+      {/* Main card with gradient like KovaFit */}
+      <div className="bg-gradient-card rounded-3xl p-4 shadow-sm">
+        <div className="text-xs text-foreground/60 font-medium uppercase tracking-widest mb-3">
+          Remaining
         </div>
         
         {/* Macro grid */}
-        <div className="flex gap-2 px-1">
+        <div className="flex gap-2">
           <MacroItem
             label="Cal"
             remaining={remaining.calories}
@@ -83,7 +85,7 @@ export function StickyMacroHeader({ consumed, targets, remaining }: StickyMacroH
             target={targets.calories}
             unit="kcal"
             colorClass="text-calories"
-            bgClass="bg-calories-light"
+            bgClass="bg-white/40"
           />
           <MacroItem
             label="Protein"
@@ -91,7 +93,7 @@ export function StickyMacroHeader({ consumed, targets, remaining }: StickyMacroH
             consumed={consumed.protein}
             target={targets.protein}
             colorClass="text-protein"
-            bgClass="bg-protein-light"
+            bgClass="bg-white/40"
           />
           <MacroItem
             label="Carbs"
@@ -99,7 +101,7 @@ export function StickyMacroHeader({ consumed, targets, remaining }: StickyMacroH
             consumed={consumed.carbs}
             target={targets.carbs}
             colorClass="text-carbs"
-            bgClass="bg-carbs-light"
+            bgClass="bg-white/40"
           />
           <MacroItem
             label="Fat"
@@ -107,7 +109,7 @@ export function StickyMacroHeader({ consumed, targets, remaining }: StickyMacroH
             consumed={consumed.fat}
             target={targets.fat}
             colorClass="text-fat"
-            bgClass="bg-fat-light"
+            bgClass="bg-white/40"
           />
         </div>
       </div>

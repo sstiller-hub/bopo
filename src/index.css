@@ -4,111 +4,117 @@
 
 @layer base {
   :root {
-    /* Clean white background */
-    --background: 0 0% 98%;
-    --foreground: 220 20% 10%;
+    /* Warm gray background like KovaFit */
+    --background: 30 10% 96%;
+    --foreground: 0 0% 15%;
 
-    /* Cards with subtle depth */
+    /* Cards with clean white */
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 0 0% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 0 0% 15%;
 
-    /* Primary - deep teal for health/wellness */
-    --primary: 173 58% 39%;
+    /* Primary - Warm coral/salmon like KovaFit */
+    --primary: 10 70% 55%;
     --primary-foreground: 0 0% 100%;
+    --primary-soft: 15 80% 92%;
 
-    /* Secondary - soft gray */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 20% 25%;
+    /* Secondary - soft blush */
+    --secondary: 20 30% 95%;
+    --secondary-foreground: 0 0% 25%;
 
     /* Muted */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 30 10% 93%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Accent */
-    --accent: 173 58% 95%;
-    --accent-foreground: 173 58% 30%;
+    /* Accent - peach tones */
+    --accent: 20 70% 94%;
+    --accent-foreground: 10 70% 40%;
 
-    /* Destructive - for over-limit */
+    /* Destructive */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 173 58% 39%;
+    /* Borders - very subtle */
+    --border: 30 15% 90%;
+    --input: 30 15% 90%;
+    --ring: 10 70% 55%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
-    /* Macro colors - vibrant and distinct */
-    --calories: 38 92% 50%;
-    --calories-light: 38 92% 95%;
-    --protein: 0 84% 60%;
-    --protein-light: 0 84% 95%;
-    --carbs: 199 89% 48%;
-    --carbs-light: 199 89% 95%;
-    --fat: 45 93% 47%;
-    --fat-light: 45 93% 95%;
+    /* Macro colors - warm, cohesive palette */
+    --calories: 10 70% 55%;
+    --calories-light: 15 80% 94%;
+    --protein: 350 65% 55%;
+    --protein-light: 350 70% 95%;
+    --carbs: 200 70% 50%;
+    --carbs-light: 200 70% 94%;
+    --fat: 40 85% 55%;
+    --fat-light: 40 80% 94%;
 
     /* Success states */
-    --success: 142 71% 45%;
+    --success: 150 60% 45%;
     --success-foreground: 0 0% 100%;
-    --success-light: 142 71% 95%;
+    --success-light: 150 60% 94%;
 
     /* Warning */
-    --warning: 38 92% 50%;
+    --warning: 35 90% 55%;
     --warning-foreground: 0 0% 100%;
 
-    /* Sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 20% 25%;
-    --sidebar-primary: 173 58% 39%;
+    /* Gradient for cards */
+    --gradient-primary: linear-gradient(135deg, hsl(15, 75%, 92%) 0%, hsl(10, 70%, 80%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(15, 80%, 92%) 0%, hsl(10, 70%, 85%) 100%);
+
+    /* Sidebar - matching warm tones */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 25%;
+    --sidebar-primary: 10 70% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 173 58% 95%;
-    --sidebar-accent-foreground: 173 58% 30%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 173 58% 39%;
+    --sidebar-accent: 20 70% 94%;
+    --sidebar-accent-foreground: 10 70% 40%;
+    --sidebar-border: 30 15% 92%;
+    --sidebar-ring: 10 70% 55%;
   }
 
   .dark {
-    --background: 220 20% 8%;
+    --background: 0 0% 8%;
     --foreground: 0 0% 95%;
 
-    --card: 220 20% 12%;
+    --card: 0 0% 12%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 220 20% 12%;
+    --popover: 0 0% 12%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 173 58% 45%;
+    --primary: 10 70% 60%;
     --primary-foreground: 0 0% 100%;
+    --primary-soft: 10 40% 18%;
 
-    --secondary: 220 14% 18%;
+    --secondary: 0 0% 16%;
     --secondary-foreground: 0 0% 85%;
 
-    --muted: 220 14% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 173 40% 20%;
-    --accent-foreground: 173 58% 70%;
+    --accent: 10 40% 18%;
+    --accent-foreground: 10 70% 70%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 20%;
-    --input: 220 14% 20%;
-    --ring: 173 58% 45%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 10 70% 60%;
 
-    --sidebar-background: 220 20% 10%;
+    --sidebar-background: 0 0% 10%;
     --sidebar-foreground: 0 0% 85%;
-    --sidebar-primary: 173 58% 45%;
+    --sidebar-primary: 10 70% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 173 40% 18%;
-    --sidebar-accent-foreground: 173 58% 70%;
-    --sidebar-border: 220 14% 18%;
-    --sidebar-ring: 173 58% 45%;
+    --sidebar-accent: 10 40% 16%;
+    --sidebar-accent-foreground: 10 70% 70%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 10 70% 60%;
   }
 }
 
@@ -123,12 +129,10 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Smooth scrolling for the app */
   html {
     scroll-behavior: smooth;
   }
 
-  /* Hide scrollbar but keep functionality */
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -189,6 +193,15 @@
     color: hsl(var(--success));
   }
 
+  /* Gradient card like KovaFit */
+  .bg-gradient-card {
+    background: linear-gradient(180deg, hsl(15, 80%, 92%) 0%, hsl(10, 70%, 85%) 100%);
+  }
+
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, hsl(10, 70%, 60%) 0%, hsl(5, 65%, 50%) 100%);
+  }
+
   /* Number font for macros */
   .font-tabular {
     font-variant-numeric: tabular-nums;
@@ -196,10 +209,10 @@
 
   /* Safe area padding for PWA */
   .safe-top {
-    padding-top: max(env(safe-area-inset-top), 1rem);
+    padding-top: max(env(safe-area-inset-top), 0.75rem);
   }
   .safe-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
   }
   .safe-x {
     padding-left: max(env(safe-area-inset-left), 1rem);

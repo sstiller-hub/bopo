@@ -39,14 +39,14 @@ export default function TodayDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-28">
       <StickyMacroHeader
         consumed={consumed}
         targets={targets}
         remaining={remaining}
       />
 
-      <main className="px-4 py-4 space-y-3">
+      <main className="px-4 py-2 space-y-3">
         {meals.map(({ key, defaultName }, index) => (
           <motion.div
             key={key}
@@ -71,7 +71,7 @@ export default function TodayDashboard() {
 
       {/* Floating Add Button */}
       <motion.div
-        className="fixed bottom-20 right-4 z-40"
+        className="fixed bottom-24 right-4 z-40"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.3, type: 'spring' }}
@@ -79,7 +79,7 @@ export default function TodayDashboard() {
         <Button
           size="lg"
           onClick={() => navigate('/log')}
-          className="h-14 w-14 rounded-full shadow-lg shadow-primary/25"
+          className="h-14 w-14 rounded-full shadow-lg shadow-primary/30 bg-gradient-primary hover:opacity-90"
         >
           <Plus className="w-6 h-6" />
         </Button>
