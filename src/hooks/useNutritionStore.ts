@@ -490,6 +490,39 @@ export function useEntries() {
     return null;
   }, [user]);
 
+  const copyEntriesFromDate = useCallback(async (sourceDate: string, targetDate: string) => {
+    if (!user) return 0;
+
+    const sourceEntries = entries.filter(e => e.date === sourceDate);
+    if (sourceEntries.length === 0) return 0;
+
+    const newDbEntries = sourceEntries.map(entry => ({
+      user_id: user.id,
+      date: targetDate,
+      meal: entry.meal,
+      food_id: entry.foodId || null,
+      food_name: entry.foodName,
+      amount_grams: entry.amountGrams,
+      calories: entry.computedMacros.calories,
+      protein: entry.computedMacros.protein,
+      carbs: entry.computedMacros.carbs,
+      fat: entry.computedMacros.fat,
+      note: entry.note || null,
+    }));
+
+    const { data, error } = await supabase
+      .from('entries')
+      .insert(newDbEntries)
+      .select();
+
+    if (data && !error) {
+      const newEntries = data.map((d) => dbEntryToEntry(d as DbEntry));
+      setEntries(prev => [...newEntries, ...prev]);
+      return newEntries.length;
+    }
+    return 0;
+  }, [user, entries]);
+
   const updateEntry = useCallback(async (id: string, updates: Partial<Entry>) => {
     if (!user) return;
 
@@ -588,6 +621,7 @@ export function useEntries() {
     updateEntry,
     deleteEntry,
     duplicateEntry,
+    copyEntriesFromDate,
     getEntriesForDate,
     getEntriesByMeal,
     getTotalsForDate,
