@@ -34,11 +34,11 @@ function MacroItem({ label, remaining, consumed, target, unit = 'g', colorClass,
         )}>
           {Math.round(remaining)}
         </div>
-        <div className="text-[10px] text-foreground/60 font-medium uppercase tracking-wider mt-1">
+        <div className="text-[10px] text-foreground/70 font-medium uppercase tracking-wider mt-1">
           {label}
         </div>
         {/* Mini progress bar */}
-        <div className="h-1 rounded-full bg-foreground/10 mt-2 overflow-hidden">
+        <div className="h-1 rounded-full bg-foreground/20 mt-2 overflow-hidden">
           <motion.div
             className={cn(
               'h-full rounded-full',
@@ -65,14 +65,15 @@ export function StickyMacroHeader({ consumed, targets, remaining }: StickyMacroH
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Title */}
+      {/* Title - KovaFit style */}
       <div className="pt-4 pb-3">
-        <h1 className="text-2xl font-bold text-foreground">Today</h1>
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-1">MACRO TRACKER</p>
+        <h1 className="text-3xl font-bold text-foreground">Today</h1>
       </div>
 
       {/* Main card with gradient like KovaFit */}
-      <div className="bg-gradient-card rounded-3xl p-4 shadow-sm">
-        <div className="text-xs text-foreground/60 font-medium uppercase tracking-widest mb-3">
+      <div className="bg-gradient-primary rounded-3xl p-4 shadow-lg">
+        <div className="text-xs text-white/70 font-medium uppercase tracking-widest mb-3">
           Remaining
         </div>
         
@@ -84,32 +85,32 @@ export function StickyMacroHeader({ consumed, targets, remaining }: StickyMacroH
             consumed={consumed.calories}
             target={targets.calories}
             unit="kcal"
-            colorClass="text-calories"
-            bgClass="bg-white/40"
+            colorClass="text-white"
+            bgClass="bg-white/20 dark:bg-black/20"
           />
           <MacroItem
             label="Protein"
             remaining={remaining.protein}
             consumed={consumed.protein}
             target={targets.protein}
-            colorClass="text-protein"
-            bgClass="bg-white/40"
+            colorClass="text-white"
+            bgClass="bg-white/20 dark:bg-black/20"
           />
           <MacroItem
             label="Carbs"
             remaining={remaining.carbs}
             consumed={consumed.carbs}
             target={targets.carbs}
-            colorClass="text-carbs"
-            bgClass="bg-white/40"
+            colorClass="text-white"
+            bgClass="bg-white/20 dark:bg-black/20"
           />
           <MacroItem
             label="Fat"
             remaining={remaining.fat}
             consumed={consumed.fat}
             target={targets.fat}
-            colorClass="text-fat"
-            bgClass="bg-white/40"
+            colorClass="text-white"
+            bgClass="bg-white/20 dark:bg-black/20"
           />
         </div>
       </div>
