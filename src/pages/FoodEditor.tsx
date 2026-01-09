@@ -95,7 +95,7 @@ export default function FoodEditor() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
 
     const macros: Macros = {
@@ -120,11 +120,11 @@ export default function FoodEditor() {
     };
 
     if (existingFood) {
-      updateFood(existingFood.id, foodData);
+      await updateFood(existingFood.id, foodData);
     } else {
-      const newFood = addFood(foodData);
+      const newFood = await addFood(foodData);
       // If we came from barcode scan, navigate to confirm entry
-      if (prefillBarcode && meal) {
+      if (prefillBarcode && meal && newFood) {
         navigate(`/confirm?foodId=${newFood.id}&meal=${meal}`);
         return;
       }
@@ -133,9 +133,9 @@ export default function FoodEditor() {
     navigate('/foods');
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (existingFood) {
-      deleteFood(existingFood.id);
+      await deleteFood(existingFood.id);
       navigate('/foods');
     }
   };
