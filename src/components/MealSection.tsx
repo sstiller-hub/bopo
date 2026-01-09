@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Plus, Trash2, Copy, Edit2 } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Entry, Macros, MealType, gramsToOunces } from '@/types/nutrition';
+import { Entry, Macros, MealType } from '@/types/nutrition';
+import { SwipeableEntry } from './SwipeableEntry';
 
 interface MealSectionProps {
   title: string;
@@ -28,14 +29,6 @@ export function MealSection({
   onDuplicateEntry,
 }: MealSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [swipedEntryId, setSwipedEntryId] = useState<string | null>(null);
-
-  const formatAmount = (grams: number) => {
-    if (preferredUnit === 'oz') {
-      return `${gramsToOunces(grams).toFixed(1)} oz`;
-    }
-    return `${Math.round(grams)}g`;
-  };
 
   return (
     <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
@@ -86,57 +79,14 @@ export function MealSection({
               ) : (
                 <div className="divide-y divide-border/50">
                   {entries.map((entry) => (
-                    <div
+                    <SwipeableEntry
                       key={entry.id}
-                      className="relative overflow-hidden"
-                    >
-                      {/* Entry content */}
-                      <motion.div
-                        className="flex items-center justify-between p-4 bg-card"
-                        animate={{ x: swipedEntryId === entry.id ? -120 : 0 }}
-                        transition={{ type: 'spring', damping: 20 }}
-                        onClick={() => setSwipedEntryId(swipedEntryId === entry.id ? null : entry.id)}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-foreground truncate">
-                            {entry.foodName}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {formatAmount(entry.amountGrams)}
-                            {entry.note && <span className="ml-2 italic">• {entry.note}</span>}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs font-tabular shrink-0 ml-4">
-                          <span className="text-calories font-semibold">{Math.round(entry.computedMacros.calories)}</span>
-                          <span className="text-muted-foreground/40">|</span>
-                          <span className="text-protein">{Math.round(entry.computedMacros.protein)}</span>
-                          <span className="text-carbs">{Math.round(entry.computedMacros.carbs)}</span>
-                          <span className="text-fat">{Math.round(entry.computedMacros.fat)}</span>
-                        </div>
-                      </motion.div>
-
-                      {/* Swipe actions */}
-                      <div className="absolute right-0 top-0 bottom-0 flex items-stretch">
-                        <button
-                          onClick={() => onEditEntry(entry)}
-                          className="w-10 bg-primary flex items-center justify-center text-primary-foreground"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => onDuplicateEntry(entry.id)}
-                          className="w-10 bg-muted flex items-center justify-center text-foreground"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => onDeleteEntry(entry.id)}
-                          className="w-10 bg-destructive flex items-center justify-center text-destructive-foreground"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
+                      entry={entry}
+                      preferredUnit={preferredUnit}
+                      onEdit={onEditEntry}
+                      onDelete={onDeleteEntry}
+                      onDuplicate={onDuplicateEntry}
+                    />
                   ))}
                 </div>
               )}
