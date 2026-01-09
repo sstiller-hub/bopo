@@ -212,23 +212,29 @@ export default function LogFood() {
 function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const controlsRef = useRef<any>(null);
+  const hasScannedRef = useRef(false);
 
   useEffect(() => {
-    let codeReader: any = null;
+    let isMounted = true;
 
     async function startScanning() {
       try {
         const { BrowserMultiFormatReader } = await import('@zxing/browser');
-        codeReader = new BrowserMultiFormatReader();
+        const codeReader = new BrowserMultiFormatReader();
         
-        if (videoRef.current) {
-          await codeReader.decodeFromVideoDevice(
+        if (videoRef.current && isMounted) {
+          controlsRef.current = await codeReader.decodeFromVideoDevice(
             undefined,
             videoRef.current,
-            (result: any, err: any) => {
-              if (result) {
+            (result, err) => {
+              if (result && !hasScannedRef.current) {
+                hasScannedRef.current = true;
                 const barcode = result.getText();
-                codeReader.reset();
+                // Stop the scanner
+                if (controlsRef.current) {
+                  controlsRef.current.stop();
+                }
                 onScan(barcode);
               }
             }
@@ -236,15 +242,18 @@ function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
         }
       } catch (err) {
         console.error('Scanner error:', err);
-        setError('Camera access denied or not available');
+        if (isMounted) {
+          setError('Camera access denied or not available');
+        }
       }
     }
 
     startScanning();
 
     return () => {
-      if (codeReader) {
-        codeReader.reset();
+      isMounted = false;
+      if (controlsRef.current) {
+        controlsRef.current.stop();
       }
     };
   }, [onScan]);
