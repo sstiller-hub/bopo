@@ -1,17 +1,21 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Save, RefreshCw } from 'lucide-react';
+import { Save, RefreshCw, LogOut } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { UnitToggle } from '@/components/UnitToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSettings } from '@/hooks/useNutritionStore';
+import { useAuth } from '@/hooks/useAuth';
 import { Macros, defaultSettings } from '@/types/nutrition';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
   const { settings, updateSettings } = useSettings();
   
   const [targets, setTargets] = useState<Macros>(settings.dailyTargets);
@@ -49,6 +53,11 @@ export default function SettingsPage() {
     setTargets(defaultSettings.dailyTargets);
     updateSettings({ dailyTargets: defaultSettings.dailyTargets });
     toast.success('Targets reset to defaults');
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
   };
 
   return (
@@ -261,6 +270,32 @@ export default function SettingsPage() {
               </Button>
             </motion.div>
           )}
+        </section>
+
+        {/* Account */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Account
+          </h2>
+          <div className="bg-card rounded-xl border border-border p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Signed in as</div>
+                <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+                  {user?.email}
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleSignOut}
+                className="text-destructive hover:text-destructive"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
         </section>
 
         {/* App Info */}

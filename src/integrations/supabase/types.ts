@@ -14,7 +14,212 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      entries: {
+        Row: {
+          amount_grams: number
+          calories: number
+          carbs: number
+          created_at: string
+          date: string
+          fat: number
+          food_id: string | null
+          food_name: string
+          id: string
+          meal: Database["public"]["Enums"]["meal_type"]
+          note: string | null
+          protein: number
+          user_id: string
+        }
+        Insert: {
+          amount_grams: number
+          calories: number
+          carbs: number
+          created_at?: string
+          date: string
+          fat: number
+          food_id?: string | null
+          food_name: string
+          id?: string
+          meal: Database["public"]["Enums"]["meal_type"]
+          note?: string | null
+          protein: number
+          user_id: string
+        }
+        Update: {
+          amount_grams?: number
+          calories?: number
+          carbs?: number
+          created_at?: string
+          date?: string
+          fat?: number
+          food_id?: string | null
+          food_name?: string
+          id?: string
+          meal?: Database["public"]["Enums"]["meal_type"]
+          note?: string | null
+          protein?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entries_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foods: {
+        Row: {
+          barcode: string | null
+          brand: string | null
+          calories_per_100g: number | null
+          calories_per_serving: number | null
+          carbs_per_100g: number | null
+          carbs_per_serving: number | null
+          created_at: string
+          fat_per_100g: number | null
+          fat_per_serving: number | null
+          id: string
+          is_favorite: boolean
+          last_used_at: string | null
+          name: string
+          nutrition_basis: Database["public"]["Enums"]["nutrition_basis"]
+          protein_per_100g: number | null
+          protein_per_serving: number | null
+          serving_grams: number | null
+          source: Database["public"]["Enums"]["food_source"]
+          updated_at: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          barcode?: string | null
+          brand?: string | null
+          calories_per_100g?: number | null
+          calories_per_serving?: number | null
+          carbs_per_100g?: number | null
+          carbs_per_serving?: number | null
+          created_at?: string
+          fat_per_100g?: number | null
+          fat_per_serving?: number | null
+          id?: string
+          is_favorite?: boolean
+          last_used_at?: string | null
+          name: string
+          nutrition_basis?: Database["public"]["Enums"]["nutrition_basis"]
+          protein_per_100g?: number | null
+          protein_per_serving?: number | null
+          serving_grams?: number | null
+          source?: Database["public"]["Enums"]["food_source"]
+          updated_at?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          barcode?: string | null
+          brand?: string | null
+          calories_per_100g?: number | null
+          calories_per_serving?: number | null
+          carbs_per_100g?: number | null
+          carbs_per_serving?: number | null
+          created_at?: string
+          fat_per_100g?: number | null
+          fat_per_serving?: number | null
+          id?: string
+          is_favorite?: boolean
+          last_used_at?: string | null
+          name?: string
+          nutrition_basis?: Database["public"]["Enums"]["nutrition_basis"]
+          protein_per_100g?: number | null
+          protein_per_serving?: number | null
+          serving_grams?: number | null
+          source?: Database["public"]["Enums"]["food_source"]
+          updated_at?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          daily_calories: number
+          daily_carbs: number
+          daily_fat: number
+          daily_protein: number
+          id: string
+          meal_name_breakfast: string | null
+          meal_name_dinner: string | null
+          meal_name_lunch: string | null
+          meal_name_snacks: string | null
+          preferred_unit: Database["public"]["Enums"]["weight_unit"]
+          rest_calories: number | null
+          rest_carbs: number | null
+          rest_fat: number | null
+          rest_protein: number | null
+          tolerance_calories: number | null
+          tolerance_macros: number | null
+          training_calories: number | null
+          training_carbs: number | null
+          training_fat: number | null
+          training_protein: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_calories?: number
+          daily_carbs?: number
+          daily_fat?: number
+          daily_protein?: number
+          id?: string
+          meal_name_breakfast?: string | null
+          meal_name_dinner?: string | null
+          meal_name_lunch?: string | null
+          meal_name_snacks?: string | null
+          preferred_unit?: Database["public"]["Enums"]["weight_unit"]
+          rest_calories?: number | null
+          rest_carbs?: number | null
+          rest_fat?: number | null
+          rest_protein?: number | null
+          tolerance_calories?: number | null
+          tolerance_macros?: number | null
+          training_calories?: number | null
+          training_carbs?: number | null
+          training_fat?: number | null
+          training_protein?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_calories?: number
+          daily_carbs?: number
+          daily_fat?: number
+          daily_protein?: number
+          id?: string
+          meal_name_breakfast?: string | null
+          meal_name_dinner?: string | null
+          meal_name_lunch?: string | null
+          meal_name_snacks?: string | null
+          preferred_unit?: Database["public"]["Enums"]["weight_unit"]
+          rest_calories?: number | null
+          rest_carbs?: number | null
+          rest_fat?: number | null
+          rest_protein?: number | null
+          tolerance_calories?: number | null
+          tolerance_macros?: number | null
+          training_calories?: number | null
+          training_carbs?: number | null
+          training_fat?: number | null
+          training_protein?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +228,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      food_source: "user" | "open_food_facts"
+      meal_type: "breakfast" | "lunch" | "dinner" | "snacks"
+      nutrition_basis: "per_100g" | "per_serving"
+      weight_unit: "g" | "oz"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +358,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      food_source: ["user", "open_food_facts"],
+      meal_type: ["breakfast", "lunch", "dinner", "snacks"],
+      nutrition_basis: ["per_100g", "per_serving"],
+      weight_unit: ["g", "oz"],
+    },
   },
 } as const
