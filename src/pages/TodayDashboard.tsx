@@ -217,10 +217,10 @@ export default function TodayDashboard() {
               REMAINING
             </div>
             
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-1.5">
               <MacroItem label="Cal" value={remaining.calories} isOver={remaining.calories < 0} />
-              <MacroItem label="Protein" value={remaining.protein} isOver={remaining.protein < 0} />
-              <MacroItem label="Carbs" value={remaining.carbs} isOver={remaining.carbs < 0} />
+              <MacroItem label="Pro" value={remaining.protein} isOver={remaining.protein < 0} />
+              <MacroItem label="Carb" value={remaining.carbs} isOver={remaining.carbs < 0} />
               <MacroItem label="Fat" value={remaining.fat} isOver={remaining.fat < 0} />
             </div>
           </div>
