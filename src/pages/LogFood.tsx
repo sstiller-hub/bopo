@@ -18,12 +18,10 @@ export default function LogFood() {
   
   const [activeTab, setActiveTab] = useState<TabType>('recent');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
   
   const { getRecentFoods, getFrequentFoods, getFavorites, searchFoods, findByBarcode } = useFoods();
   
   const recentFoods = getRecentFoods(20);
-  const frequentFoods = getFrequentFoods(10);
   const favorites = getFavorites();
   const searchResults = searchQuery.length >= 2 ? searchFoods(searchQuery) : [];
 
@@ -42,31 +40,34 @@ export default function LogFood() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border safe-top">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Button 
-            variant="ghost" 
-            size="icon"
+    <div className="min-h-screen bg-background pb-28">
+      {/* Header - KovaFit style */}
+      <div className="px-5 pt-12 pb-4 safe-top">
+        <div className="flex items-center gap-3">
+          <button 
             onClick={() => navigate('/')}
+            className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-sm"
           >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-lg font-semibold flex-1">Log Food</h1>
-          <span className="text-sm text-muted-foreground capitalize">{meal}</span>
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-foreground">Log Food</h1>
+            <p className="text-sm text-muted-foreground capitalize">{meal}</p>
+          </div>
         </div>
+      </div>
 
-        {/* Tabs */}
-        <div className="flex px-4 pb-3 gap-2">
+      {/* Tabs */}
+      <div className="px-4 pb-4">
+        <div className="flex gap-2 p-1 bg-card rounded-2xl shadow-sm">
           {tabs.map(({ key, icon: Icon, label }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-sm transition-all ${
                 activeTab === key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:text-foreground'
+                  ? 'bg-gradient-primary text-white shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -76,7 +77,7 @@ export default function LogFood() {
         </div>
       </div>
 
-      <main className="px-4 py-4">
+      <main className="px-4">
         <AnimatePresence mode="wait">
           {/* Recent Tab */}
           {activeTab === 'recent' && (
@@ -85,12 +86,12 @@ export default function LogFood() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="space-y-6"
+              className="space-y-5"
             >
               {/* Favorites */}
               {favorites.length > 0 && (
                 <section>
-                  <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3">
+                  <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3 px-1">
                     <Star className="w-4 h-4" />
                     Favorites
                   </h2>
@@ -104,7 +105,7 @@ export default function LogFood() {
 
               {/* Recent */}
               <section>
-                <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3">
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3 px-1">
                   <Clock className="w-4 h-4" />
                   Recent
                 </h2>
@@ -115,9 +116,11 @@ export default function LogFood() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
+                  <div className="text-center py-12 bg-card rounded-2xl">
                     <p className="text-muted-foreground mb-4">No foods logged yet</p>
-                    <Button onClick={handleCreateFood}>Create Your First Food</Button>
+                    <Button onClick={handleCreateFood} className="bg-gradient-primary">
+                      Create Your First Food
+                    </Button>
                   </div>
                 )}
               </section>
@@ -135,18 +138,18 @@ export default function LogFood() {
             >
               {/* Search input */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   placeholder="Search foods..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-12"
+                  className="pl-12 h-12 bg-card rounded-2xl border-0 shadow-sm"
                   autoFocus
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    className="absolute right-4 top-1/2 -translate-y-1/2"
                   >
                     <X className="w-4 h-4 text-muted-foreground" />
                   </button>
@@ -162,13 +165,15 @@ export default function LogFood() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
+                  <div className="text-center py-12 bg-card rounded-2xl">
                     <p className="text-muted-foreground mb-4">No foods found for "{searchQuery}"</p>
-                    <Button onClick={handleCreateFood}>Create New Food</Button>
+                    <Button onClick={handleCreateFood} className="bg-gradient-primary">
+                      Create New Food
+                    </Button>
                   </div>
                 )
               ) : (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-12 text-muted-foreground bg-card rounded-2xl">
                   Type at least 2 characters to search
                 </div>
               )}
@@ -190,7 +195,6 @@ export default function LogFood() {
                   if (food) {
                     handleFoodSelect(food);
                   } else {
-                    // Not found - navigate to create with barcode prefilled
                     navigate(`/foods/new?barcode=${barcode}&meal=${meal}`);
                   }
                 }}
@@ -207,7 +211,6 @@ export default function LogFood() {
 
 function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -219,7 +222,6 @@ function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
         codeReader = new BrowserMultiFormatReader();
         
         if (videoRef.current) {
-          setIsScanning(true);
           await codeReader.decodeFromVideoDevice(
             undefined,
             videoRef.current,
@@ -235,7 +237,6 @@ function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
       } catch (err) {
         console.error('Scanner error:', err);
         setError('Camera access denied or not available');
-        setIsScanning(false);
       }
     }
 
@@ -250,7 +251,7 @@ function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
 
   if (error) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12 bg-card rounded-2xl">
         <p className="text-destructive mb-4">{error}</p>
         <p className="text-muted-foreground text-sm">
           Please allow camera access to scan barcodes
@@ -261,14 +262,14 @@ function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
 
   return (
     <div className="space-y-4">
-      <div className="relative aspect-[4/3] bg-muted rounded-xl overflow-hidden">
+      <div className="relative aspect-[4/3] bg-card rounded-2xl overflow-hidden shadow-sm">
         <video
           ref={videoRef}
           className="absolute inset-0 w-full h-full object-cover"
         />
         {/* Scan overlay */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-64 h-32 border-2 border-primary rounded-lg relative">
+          <div className="w-64 h-32 border-2 border-primary rounded-xl relative">
             <div className="absolute -top-1 left-4 right-4 h-0.5 bg-primary animate-pulse" />
           </div>
         </div>

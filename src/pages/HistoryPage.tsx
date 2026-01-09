@@ -14,9 +14,6 @@ export default function HistoryPage() {
   const { settings } = useSettings();
   const [viewDays, setViewDays] = useState<7 | 30>(7);
 
-  // Get unique dates with entries
-  const dates = getHistoryDates(viewDays);
-  
   // Generate all dates in range for display
   const allDates = Array.from({ length: viewDays }, (_, i) => {
     const date = subDays(new Date(), i);
@@ -45,22 +42,22 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border safe-top">
-        <div className="px-4 py-4">
-          <h1 className="text-xl font-bold">History</h1>
-        </div>
-        
-        {/* Period toggle */}
-        <div className="flex gap-2 px-4 pb-3">
+    <div className="min-h-screen bg-background pb-28">
+      {/* Header - KovaFit style */}
+      <div className="px-5 pt-12 pb-4 safe-top">
+        <h1 className="text-3xl font-bold text-foreground">History</h1>
+      </div>
+      
+      {/* Period toggle */}
+      <div className="px-4 pb-4">
+        <div className="flex gap-2 p-1 bg-card rounded-2xl shadow-sm">
           <button
             onClick={() => setViewDays(7)}
             className={cn(
-              'px-4 py-2 rounded-lg font-medium text-sm transition-colors',
+              'flex-1 py-3 rounded-xl font-medium text-sm transition-all',
               viewDays === 7
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground'
+                ? 'bg-gradient-primary text-white shadow-md'
+                : 'text-muted-foreground'
             )}
           >
             Last 7 Days
@@ -68,10 +65,10 @@ export default function HistoryPage() {
           <button
             onClick={() => setViewDays(30)}
             className={cn(
-              'px-4 py-2 rounded-lg font-medium text-sm transition-colors',
+              'flex-1 py-3 rounded-xl font-medium text-sm transition-all',
               viewDays === 30
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground'
+                ? 'bg-gradient-primary text-white shadow-md'
+                : 'text-muted-foreground'
             )}
           >
             Last 30 Days
@@ -79,7 +76,7 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      <main className="px-4 py-4">
+      <main className="px-4">
         <div className="space-y-2">
           {allDates.map((date, index) => {
             const totals = getTotalsForDate(date);
@@ -104,10 +101,8 @@ export default function HistoryPage() {
                 transition={{ delay: index * 0.02 }}
                 onClick={() => navigate(`/?date=${date}`)}
                 className={cn(
-                  'w-full flex items-center gap-4 p-4 bg-card rounded-xl border transition-all',
-                  hasEntries 
-                    ? 'border-border hover:border-primary/30' 
-                    : 'border-border/50 opacity-60'
+                  'w-full flex items-center gap-4 p-4 bg-card rounded-2xl shadow-sm transition-all active:scale-[0.98]',
+                  !hasEntries && 'opacity-60'
                 )}
               >
                 {/* Status indicator */}
@@ -129,7 +124,7 @@ export default function HistoryPage() {
                 {/* Date and totals */}
                 <div className="flex-1 text-left">
                   <div className={cn(
-                    'font-medium',
+                    'font-semibold',
                     isToday && 'text-primary'
                   )}>
                     {dateLabel}
