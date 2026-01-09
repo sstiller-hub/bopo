@@ -26,6 +26,12 @@ export interface FetchProductResult {
   error?: string;
 }
 
+export interface SearchProductsResult {
+  success: boolean;
+  products: OpenFoodFactsProduct[];
+  error?: string;
+}
+
 export async function fetchProductByBarcode(barcode: string): Promise<FetchProductResult> {
   try {
     const response = await fetch(
@@ -62,6 +68,46 @@ export async function fetchProductByBarcode(barcode: string): Promise<FetchProdu
   } catch (error) {
     console.error('Open Food Facts API error:', error);
     return { success: false, error: 'Network error - please try again' };
+  }
+}
+
+export async function searchProducts(query: string, limit = 20): Promise<SearchProductsResult> {
+  try {
+    const response = await fetch(
+      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=${limit}`,
+      {
+        headers: {
+          'User-Agent': 'MacroTracker - Lovable App',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return { success: false, products: [], error: 'Failed to search products' };
+    }
+
+    const data = await response.json();
+
+    if (!data.products || data.products.length === 0) {
+      return { success: false, products: [], error: 'No products found' };
+    }
+
+    const products: OpenFoodFactsProduct[] = data.products
+      .filter((p: any) => p.product_name && p.nutriments)
+      .map((p: any) => ({
+        code: p.code,
+        product_name: p.product_name || p.product_name_en,
+        brands: p.brands,
+        serving_size: p.serving_size,
+        serving_quantity: p.serving_quantity,
+        nutriments: p.nutriments,
+        image_url: p.image_url || p.image_front_url,
+      }));
+
+    return { success: true, products };
+  } catch (error) {
+    console.error('Open Food Facts search error:', error);
+    return { success: false, products: [], error: 'Network error - please try again' };
   }
 }
 
