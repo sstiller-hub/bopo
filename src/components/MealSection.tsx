@@ -73,32 +73,36 @@ export function MealSection({
           >
             <div className="border-t border-white/10 dark:border-white/10">
               {entries.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground dark:text-white/40 text-sm">
-                  No foods logged yet
-                </div>
+                <button
+                  onClick={() => onAddFood(meal)}
+                  className="w-full p-4 flex items-center justify-center hover:bg-white/5 dark:hover:bg-white/5 transition-colors rounded-b-3xl"
+                >
+                  <Plus className="w-5 h-5 text-primary" />
+                </button>
               ) : (
-                <div className="divide-y divide-white/5 dark:divide-white/10">
-                  {entries.map((entry) => (
-                    <SwipeableEntry
-                      key={entry.id}
-                      entry={entry}
-                      preferredUnit={preferredUnit}
-                      onEdit={onEditEntry}
-                      onDelete={onDeleteEntry}
-                      onDuplicate={onDuplicateEntry}
-                    />
-                  ))}
-                </div>
-              )}
+                <>
+                  <div className="divide-y divide-white/5 dark:divide-white/10">
+                    {entries.map((entry) => (
+                      <SwipeableEntry
+                        key={entry.id}
+                        entry={entry}
+                        preferredUnit={preferredUnit}
+                        onEdit={onEditEntry}
+                        onDelete={onDeleteEntry}
+                        onDuplicate={onDuplicateEntry}
+                      />
+                    ))}
+                  </div>
 
-              {/* Add food button */}
-              <button
-                onClick={() => onAddFood(meal)}
-                className="w-full p-3 flex items-center justify-center gap-2 text-primary font-medium hover:bg-white/5 dark:hover:bg-white/5 transition-colors border-t border-white/10 dark:border-white/10 rounded-b-3xl"
-              >
-                <Plus className="w-4 h-4" />
-                Add Food
-              </button>
+                  {/* Add food button */}
+                  <button
+                    onClick={() => onAddFood(meal)}
+                    className="w-full p-3 flex items-center justify-center hover:bg-white/5 dark:hover:bg-white/5 transition-colors border-t border-white/10 dark:border-white/10 rounded-b-3xl"
+                  >
+                    <Plus className="w-4 h-4 text-primary" />
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
