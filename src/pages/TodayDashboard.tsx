@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, ChevronLeft, ChevronRight, Calendar, Zap } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Calendar, Zap, Copy } from 'lucide-react';
 import { format, addDays, subDays, isToday, parseISO } from 'date-fns';
 import { MealSection } from '@/components/MealSection';
 import { BottomNav } from '@/components/BottomNav';
@@ -22,15 +22,22 @@ export default function TodayDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { settings } = useSettings();
-  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry } = useEntries();
+  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate } = useEntries();
   
   // Get selected date from URL or default to today
   const dateParam = searchParams.get('date');
   const selectedDate = dateParam || format(new Date(), 'yyyy-MM-dd');
   const selectedDateObj = parseISO(selectedDate);
   const isSelectedToday = isToday(selectedDateObj);
+  const yesterdayDate = format(subDays(selectedDateObj, 1), 'yyyy-MM-dd');
 
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
+
+  // Check if yesterday has entries and today is empty
+  const yesterdayEntries = getEntriesForDate(yesterdayDate);
+  const todayEntries = getEntriesForDate(selectedDate);
+  const canCopyYesterday = yesterdayEntries.length > 0 && todayEntries.length === 0;
 
   // Calculate stats for selected date
   const consumed = getTotalsForDate(selectedDate);
@@ -96,7 +103,21 @@ export default function TodayDashboard() {
     toast.success('Quick entry added');
   };
 
-  // Format date display
+  const handleCopyYesterday = async () => {
+    setIsCopying(true);
+    try {
+      const count = await copyEntriesFromDate(yesterdayDate, selectedDate);
+      if (count > 0) {
+        toast.success(`Copied ${count} entries from yesterday`);
+      } else {
+        toast.error('No entries to copy');
+      }
+    } catch {
+      toast.error('Failed to copy entries');
+    } finally {
+      setIsCopying(false);
+    }
+  };
   const getDateLabel = () => {
     if (isSelectedToday) return 'Today';
     if (format(subDays(new Date(), 1), 'yyyy-MM-dd') === selectedDate) return 'Yesterday';
@@ -163,6 +184,24 @@ export default function TodayDashboard() {
       </div>
 
       <main className="px-4 py-2 space-y-3">
+        {/* Copy Yesterday button - show when today is empty but yesterday has entries */}
+        {canCopyYesterday && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Button
+              variant="outline"
+              onClick={handleCopyYesterday}
+              disabled={isCopying}
+              className="w-full h-12 gap-2 bg-card border-dashed border-2 hover:bg-muted"
+            >
+              <Copy className="w-4 h-4" />
+              {isCopying ? 'Copying...' : `Copy Yesterday's Meals (${yesterdayEntries.length} items)`}
+            </Button>
+          </motion.div>
+        )}
+
         {meals.map(({ key, defaultName }, index) => (
           <motion.div
             key={key}
