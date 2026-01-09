@@ -322,15 +322,15 @@ export default function TodayDashboard() {
 
 function MacroItem({ label, value, isOver }: { label: string; value: number; isOver: boolean }) {
   return (
-    <div className="flex-1 text-center">
+    <div className="text-center min-w-0">
       <div 
-        className="rounded-2xl p-3"
+        className="rounded-2xl py-3 px-1"
         style={{ background: 'rgba(0, 0, 0, 0.2)' }}
       >
         <div 
-          className="font-tabular leading-none"
+          className="font-tabular leading-none truncate"
           style={{ 
-            fontSize: '26px', 
+            fontSize: '22px', 
             fontWeight: 800, 
             letterSpacing: '-0.03em',
             color: isOver ? 'rgba(239, 68, 68, 0.85)' : 'rgba(255, 255, 255, 0.95)'
@@ -341,7 +341,7 @@ function MacroItem({ label, value, isOver }: { label: string; value: number; isO
         <div 
           className="font-medium uppercase tracking-wider mt-1"
           style={{ 
-            fontSize: '10px', 
+            fontSize: '9px', 
             color: 'rgba(255, 255, 255, 0.5)' 
           }}
         >
