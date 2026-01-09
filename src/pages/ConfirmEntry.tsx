@@ -135,51 +135,51 @@ export default function ConfirmEntry() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border safe-top">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Button 
-            variant="ghost" 
-            size="icon"
+      {/* Header - KovaFit style */}
+      <div className="px-5 pt-12 pb-4 safe-top">
+        <div className="flex items-center gap-3">
+          <button 
             onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-sm"
           >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-lg font-semibold flex-1">
-            {existingEntry ? 'Edit Entry' : 'Add Entry'}
-          </h1>
-          <Button
-            variant="ghost"
-            size="icon"
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-foreground">
+              {existingEntry ? 'Edit Entry' : 'Add Entry'}
+            </h1>
+          </div>
+          <button
             onClick={() => setIsFavorite(!isFavorite)}
+            className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-sm"
           >
             <Heart className={cn(
               'w-5 h-5 transition-colors',
               isFavorite ? 'fill-destructive text-destructive' : 'text-muted-foreground'
             )} />
-          </Button>
+          </button>
         </div>
       </div>
 
-      <main className="px-4 py-6 space-y-6">
-        {/* Food info */}
-        <div>
+      <main className="px-4 pb-32 space-y-4">
+        {/* Food info card */}
+        <div className="bg-gradient-card rounded-2xl p-4 shadow-sm">
           <h2 className="text-xl font-bold text-foreground">{food.name}</h2>
           {food.brand && (
-            <p className="text-muted-foreground">{food.brand}</p>
+            <p className="text-muted-foreground text-sm">{food.brand}</p>
           )}
         </div>
 
         {/* Amount input with unit toggle */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Amount</Label>
+        <div className="bg-card rounded-2xl p-4 shadow-sm space-y-3">
+          <Label className="text-sm font-medium text-muted-foreground">Amount</Label>
           <div className="flex gap-3">
             <Input
               type="number"
               inputMode="decimal"
               value={amountValue}
               onChange={(e) => setAmountValue(e.target.value)}
-              className="flex-1 h-14 text-2xl font-bold text-center font-tabular"
+              className="flex-1 h-14 text-2xl font-bold text-center font-tabular bg-background rounded-xl border-0"
               autoFocus
             />
             <UnitToggle value={unit} onChange={handleUnitChange} />
@@ -188,7 +188,7 @@ export default function ConfirmEntry() {
 
         {/* Live computed macros */}
         <motion.div 
-          className="bg-card rounded-2xl border border-border p-4"
+          className="bg-card rounded-2xl p-4 shadow-sm"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -221,13 +221,15 @@ export default function ConfirmEntry() {
         </motion.div>
 
         {/* Meal selector */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Meal</Label>
+        <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
           <button
             onClick={() => setShowMealPicker(!showMealPicker)}
-            className="w-full flex items-center justify-between p-4 bg-card rounded-xl border border-border"
+            className="w-full flex items-center justify-between p-4"
           >
-            <span className="font-medium capitalize">{selectedMeal}</span>
+            <div>
+              <div className="text-sm text-muted-foreground">Meal</div>
+              <div className="font-semibold capitalize">{selectedMeal}</div>
+            </div>
             <ChevronDown className={cn(
               'w-5 h-5 text-muted-foreground transition-transform',
               showMealPicker && 'rotate-180'
@@ -236,7 +238,7 @@ export default function ConfirmEntry() {
           
           {showMealPicker && (
             <motion.div 
-              className="grid grid-cols-2 gap-2"
+              className="grid grid-cols-2 gap-2 px-4 pb-4"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
             >
@@ -248,9 +250,9 @@ export default function ConfirmEntry() {
                     setShowMealPicker(false);
                   }}
                   className={cn(
-                    'p-3 rounded-lg font-medium text-sm transition-colors',
+                    'p-3 rounded-xl font-medium text-sm transition-all',
                     selectedMeal === key
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'bg-gradient-primary text-white'
                       : 'bg-muted text-foreground hover:bg-muted/80'
                   )}
                 >
@@ -262,28 +264,30 @@ export default function ConfirmEntry() {
         </div>
 
         {/* Note */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Note (optional)</Label>
+        <div className="bg-card rounded-2xl p-4 shadow-sm space-y-2">
+          <Label className="text-sm font-medium text-muted-foreground">Note (optional)</Label>
           <Textarea
             placeholder="e.g., cooked weight, brand variant..."
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="resize-none"
+            className="resize-none bg-background border-0 rounded-xl"
             rows={2}
           />
         </div>
+      </main>
 
-        {/* Save button */}
+      {/* Fixed save button */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md safe-bottom">
         <Button
           onClick={handleSave}
           size="lg"
-          className="w-full h-14 text-lg font-semibold"
+          className="w-full h-14 text-lg font-semibold bg-gradient-primary hover:opacity-90 rounded-2xl"
           disabled={!amountValue || parseFloat(amountValue) <= 0}
         >
           <Save className="w-5 h-5 mr-2" />
           {existingEntry ? 'Update Entry' : 'Save Entry'}
         </Button>
-      </main>
+      </div>
     </div>
   );
 }

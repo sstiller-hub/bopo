@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFoods } from '@/hooks/useNutritionStore';
-import { Food, Macros } from '@/types/nutrition';
+import { Macros } from '@/types/nutrition';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -142,107 +142,105 @@ export default function FoodEditor() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border safe-top">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Button 
-            variant="ghost" 
-            size="icon"
+      {/* Header - KovaFit style */}
+      <div className="px-5 pt-12 pb-4 safe-top">
+        <div className="flex items-center gap-3">
+          <button 
             onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-sm"
           >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-lg font-semibold flex-1">
-            {existingFood ? 'Edit Food' : 'Create Food'}
-          </h1>
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-foreground">
+              {existingFood ? 'Edit Food' : 'Create Food'}
+            </h1>
+          </div>
           {existingFood && (
-            <Button 
-              variant="ghost" 
-              size="icon"
+            <button 
               onClick={() => setShowDelete(true)}
+              className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-sm"
             >
               <Trash2 className="w-5 h-5 text-destructive" />
-            </Button>
+            </button>
           )}
         </div>
       </div>
 
-      <main className="px-4 py-6 space-y-6 pb-32">
+      <main className="px-4 pb-32 space-y-4">
         {/* Basic info */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Basic Info
-          </h2>
+        <div className="bg-card rounded-2xl p-4 shadow-sm space-y-4">
+          <h2 className="font-semibold text-foreground">Basic Info</h2>
           
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name" className="text-sm text-muted-foreground">Name *</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Chicken Breast"
-              className={cn(errors.name && 'border-destructive')}
+              className={cn('bg-background border-0 rounded-xl', errors.name && 'ring-2 ring-destructive')}
             />
             {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="brand">Brand (optional)</Label>
+            <Label htmlFor="brand" className="text-sm text-muted-foreground">Brand (optional)</Label>
             <Input
               id="brand"
               value={brand}
               onChange={(e) => setBrand(e.target.value)}
               placeholder="e.g., Tyson"
+              className="bg-background border-0 rounded-xl"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="barcode">Barcode (optional)</Label>
+            <Label htmlFor="barcode" className="text-sm text-muted-foreground">Barcode (optional)</Label>
             <Input
               id="barcode"
               value={barcode}
               onChange={(e) => setBarcode(e.target.value)}
               placeholder="Scan or enter barcode"
+              className="bg-background border-0 rounded-xl"
             />
           </div>
-        </section>
+        </div>
 
         {/* Nutrition basis */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Nutrition Basis
-          </h2>
+        <div className="bg-card rounded-2xl p-4 shadow-sm space-y-4">
+          <h2 className="font-semibold text-foreground">Nutrition Basis</h2>
           
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => setNutritionBasis('per_100g')}
               className={cn(
-                'p-4 rounded-xl border-2 text-center transition-colors',
+                'p-4 rounded-xl text-center transition-all',
                 nutritionBasis === 'per_100g'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
+                  ? 'bg-gradient-primary text-white'
+                  : 'bg-muted text-foreground'
               )}
             >
               <div className="font-semibold">Per 100g</div>
-              <div className="text-sm text-muted-foreground">Recommended</div>
+              <div className="text-xs opacity-80">Recommended</div>
             </button>
             <button
               onClick={() => setNutritionBasis('per_serving')}
               className={cn(
-                'p-4 rounded-xl border-2 text-center transition-colors',
+                'p-4 rounded-xl text-center transition-all',
                 nutritionBasis === 'per_serving'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
+                  ? 'bg-gradient-primary text-white'
+                  : 'bg-muted text-foreground'
               )}
             >
               <div className="font-semibold">Per Serving</div>
-              <div className="text-sm text-muted-foreground">Custom size</div>
+              <div className="text-xs opacity-80">Custom size</div>
             </button>
           </div>
 
           {nutritionBasis === 'per_serving' && (
             <div className="space-y-2">
-              <Label htmlFor="serving">Serving Size (grams) *</Label>
+              <Label htmlFor="serving" className="text-sm text-muted-foreground">Serving Size (grams) *</Label>
               <Input
                 id="serving"
                 type="number"
@@ -250,22 +248,22 @@ export default function FoodEditor() {
                 value={servingGrams}
                 onChange={(e) => setServingGrams(e.target.value)}
                 placeholder="e.g., 85"
-                className={cn(errors.servingGrams && 'border-destructive')}
+                className={cn('bg-background border-0 rounded-xl', errors.servingGrams && 'ring-2 ring-destructive')}
               />
               {errors.servingGrams && <p className="text-sm text-destructive">{errors.servingGrams}</p>}
             </div>
           )}
-        </section>
+        </div>
 
         {/* Macros */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <div className="bg-card rounded-2xl p-4 shadow-sm space-y-4">
+          <h2 className="font-semibold text-foreground">
             Nutrition {nutritionBasis === 'per_100g' ? 'per 100g' : 'per serving'}
           </h2>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="calories" className="text-calories font-medium">Calories *</Label>
+              <Label htmlFor="calories" className="text-calories text-sm font-medium">Calories *</Label>
               <Input
                 id="calories"
                 type="number"
@@ -273,11 +271,11 @@ export default function FoodEditor() {
                 value={calories}
                 onChange={(e) => setCalories(e.target.value)}
                 placeholder="0"
-                className={cn('text-lg font-bold', errors.calories && 'border-destructive')}
+                className={cn('text-lg font-bold bg-background border-0 rounded-xl', errors.calories && 'ring-2 ring-destructive')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="protein" className="text-protein font-medium">Protein (g) *</Label>
+              <Label htmlFor="protein" className="text-protein text-sm font-medium">Protein (g) *</Label>
               <Input
                 id="protein"
                 type="number"
@@ -285,11 +283,11 @@ export default function FoodEditor() {
                 value={protein}
                 onChange={(e) => setProtein(e.target.value)}
                 placeholder="0"
-                className={cn('text-lg font-bold', errors.protein && 'border-destructive')}
+                className={cn('text-lg font-bold bg-background border-0 rounded-xl', errors.protein && 'ring-2 ring-destructive')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="carbs" className="text-carbs font-medium">Carbs (g) *</Label>
+              <Label htmlFor="carbs" className="text-carbs text-sm font-medium">Carbs (g) *</Label>
               <Input
                 id="carbs"
                 type="number"
@@ -297,11 +295,11 @@ export default function FoodEditor() {
                 value={carbs}
                 onChange={(e) => setCarbs(e.target.value)}
                 placeholder="0"
-                className={cn('text-lg font-bold', errors.carbs && 'border-destructive')}
+                className={cn('text-lg font-bold bg-background border-0 rounded-xl', errors.carbs && 'ring-2 ring-destructive')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="fat" className="text-fat font-medium">Fat (g) *</Label>
+              <Label htmlFor="fat" className="text-fat text-sm font-medium">Fat (g) *</Label>
               <Input
                 id="fat"
                 type="number"
@@ -309,19 +307,19 @@ export default function FoodEditor() {
                 value={fat}
                 onChange={(e) => setFat(e.target.value)}
                 placeholder="0"
-                className={cn('text-lg font-bold', errors.fat && 'border-destructive')}
+                className={cn('text-lg font-bold bg-background border-0 rounded-xl', errors.fat && 'ring-2 ring-destructive')}
               />
             </div>
           </div>
-        </section>
+        </div>
       </main>
 
       {/* Fixed save button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t border-border safe-bottom">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md safe-bottom">
         <Button
           onClick={handleSave}
           size="lg"
-          className="w-full h-14 text-lg font-semibold"
+          className="w-full h-14 text-lg font-semibold bg-gradient-primary hover:opacity-90 rounded-2xl"
         >
           <Save className="w-5 h-5 mr-2" />
           {existingFood ? 'Update Food' : 'Save Food'}
@@ -330,7 +328,7 @@ export default function FoodEditor() {
 
       {/* Delete confirmation */}
       <AlertDialog open={showDelete} onOpenChange={setShowDelete}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Food?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -339,10 +337,10 @@ export default function FoodEditor() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
             >
               Delete
             </AlertDialogAction>

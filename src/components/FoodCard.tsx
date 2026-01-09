@@ -22,11 +22,11 @@ export function FoodCard({ food, onClick, showFavorite = true }: FoodCardProps) 
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-4 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-sm transition-all text-left"
+      className="w-full flex items-center gap-3 p-4 bg-card rounded-2xl shadow-sm hover:shadow-md transition-all text-left active:scale-[0.98]"
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-foreground truncate">{food.name}</span>
+          <span className="font-semibold text-foreground truncate">{food.name}</span>
           {showFavorite && food.isFavorite && (
             <Heart className="w-3.5 h-3.5 fill-destructive text-destructive shrink-0" />
           )}
