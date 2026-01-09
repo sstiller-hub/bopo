@@ -1,6 +1,7 @@
 import { Home, Search, Book, History, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Today' },
@@ -14,29 +15,56 @@ export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const activeIndex = useMemo(() => {
+    const index = navItems.findIndex(item => item.path === location.pathname);
+    return index >= 0 ? index : 0;
+  }, [location.pathname]);
+
+  const indicatorWidth = `calc(${100 / navItems.length}% - 2.4px)`;
+  const indicatorLeft = `calc(${(activeIndex / navItems.length) * 100}% + 6px)`;
+
   return (
-    <nav className="fixed bottom-4 left-4 right-4 z-50">
-      <div className="bg-card backdrop-blur-xl rounded-full shadow-lg shadow-black/20 border border-border/30 safe-bottom">
-        <div className="flex items-center justify-around h-16 px-2">
-          {navItems.map(({ path, icon: Icon, label }) => {
-            const isActive = location.pathname === path;
-            return (
-              <button
-                key={path}
-                onClick={() => navigate(path)}
+    <nav 
+      className="fixed left-0 right-0 z-50 pointer-events-none flex justify-center px-4"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}
+    >
+      <div className="nav-pill pointer-events-auto">
+        {/* Sliding indicator */}
+        <div
+          aria-hidden="true"
+          className="nav-indicator"
+          style={{ 
+            width: indicatorWidth, 
+            left: indicatorLeft 
+          }}
+        />
+
+        {/* Nav items */}
+        {navItems.map(({ path, icon: Icon, label }) => {
+          const isActive = location.pathname === path;
+          return (
+            <button
+              key={path}
+              onClick={() => navigate(path)}
+              className={cn(
+                'relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2.5 transition-colors duration-200 focus-visible:outline-none',
+                isActive 
+                  ? 'text-foreground dark:text-white' 
+                  : 'text-muted-foreground'
+              )}
+            >
+              <Icon className={cn('w-5 h-5', isActive && 'stroke-[2.5]')} />
+              <span 
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-2xl transition-all duration-200',
-                  isActive 
-                    ? 'bg-secondary text-foreground' 
-                    : 'text-muted-foreground hover:text-foreground'
+                  'max-w-[72px] truncate text-center text-[10px] leading-none',
+                  isActive ? 'font-semibold' : 'font-normal'
                 )}
               >
-                <Icon className={cn('w-5 h-5', isActive && 'stroke-[2.5px]')} />
-                <span className="text-[10px] font-medium">{label}</span>
-              </button>
-            );
-          })}
-        </div>
+                {label}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </nav>
   );

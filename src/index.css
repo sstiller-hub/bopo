@@ -82,7 +82,7 @@
     --background: 0 0% 7%;
     --foreground: 0 0% 95%;
 
-    /* Cards - warm brownish dark gray */
+    /* Cards - warm brownish dark gray with glass effect */
     --card: 20 8% 13%;
     --card-foreground: 0 0% 95%;
 
@@ -111,7 +111,7 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Borders - very subtle */
-    --border: 20 6% 18%;
+    --border: 0 0% 100% / 0.1;
     --input: 20 6% 18%;
     --ring: 10 65% 55%;
 
@@ -169,6 +169,171 @@
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+}
+
+@layer components {
+  /* Glass card - KovaFit style */
+  .glass-card {
+    @apply relative overflow-hidden rounded-3xl backdrop-blur-xl;
+    background: linear-gradient(135deg, rgba(30, 30, 35, 0.8) 0%, rgba(20, 20, 25, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .light .glass-card,
+  :root:not(.dark) .glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(250, 250, 250, 0.95) 100%);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  /* Hero gradient card */
+  .glass-hero {
+    @apply relative overflow-hidden rounded-3xl backdrop-blur-xl;
+    background: linear-gradient(135deg, rgba(255, 87, 51, 0.25) 0%, rgba(255, 60, 30, 0.15) 50%, rgba(200, 40, 20, 0.2) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Atmosphere background with particles */
+  .glass-scope {
+    @apply relative;
+  }
+
+  .home-atmosphere {
+    @apply fixed inset-0 pointer-events-none overflow-hidden;
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 87, 51, 0.12), transparent 70%);
+  }
+
+  .dark .home-atmosphere {
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 87, 51, 0.15), transparent 70%);
+  }
+
+  .home-particle {
+    @apply absolute rounded-full;
+    background: rgba(255, 87, 51, 0.15);
+    animation: float-particle 20s infinite ease-in-out;
+  }
+
+  .home-particle:nth-child(1) {
+    width: 300px;
+    height: 300px;
+    top: -150px;
+    left: 10%;
+    animation-delay: 0s;
+    filter: blur(80px);
+  }
+
+  .home-particle:nth-child(2) {
+    width: 200px;
+    height: 200px;
+    top: 20%;
+    right: -50px;
+    animation-delay: -5s;
+    filter: blur(60px);
+  }
+
+  .home-particle:nth-child(3) {
+    width: 150px;
+    height: 150px;
+    bottom: 30%;
+    left: -30px;
+    animation-delay: -10s;
+    filter: blur(50px);
+  }
+
+  .home-particle:nth-child(4) {
+    width: 100px;
+    height: 100px;
+    top: 40%;
+    right: 20%;
+    animation-delay: -15s;
+    filter: blur(40px);
+  }
+
+  .home-particle:nth-child(5) {
+    width: 180px;
+    height: 180px;
+    bottom: 10%;
+    right: 30%;
+    animation-delay: -7s;
+    filter: blur(70px);
+  }
+
+  @keyframes float-particle {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.4;
+    }
+    25% {
+      transform: translate(30px, -20px) scale(1.1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translate(-20px, 30px) scale(0.9);
+      opacity: 0.5;
+    }
+    75% {
+      transform: translate(20px, 20px) scale(1.05);
+      opacity: 0.55;
+    }
+  }
+
+  /* KovaFit pill nav */
+  .nav-pill {
+    @apply relative flex items-center w-full max-w-[520px] px-1.5 py-1.5 rounded-full;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+    backdrop-filter: blur(40px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.28),
+      0 2px 10px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .light .nav-pill,
+  :root:not(.dark) .nav-pill {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(250, 250, 250, 0.9));
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.1),
+      0 2px 10px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+
+  .nav-indicator {
+    @apply absolute top-1.5 bottom-1.5 rounded-full;
+    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.12) 55%, rgba(0, 0, 0, 0.08) 100%);
+    box-shadow: 
+      0 6px 16px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: left 0.5s cubic-bezier(0.2, 0.9, 0.2, 1);
+  }
+
+  .light .nav-indicator,
+  :root:not(.dark) .nav-indicator {
+    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 1), rgba(240, 240, 240, 0.9) 55%, rgba(220, 220, 220, 0.8) 100%);
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+
+  /* Section labels like KovaFit */
+  .section-label {
+    @apply text-[10px] font-semibold tracking-wider uppercase;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .light .section-label,
+  :root:not(.dark) .section-label {
+    color: rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -255,5 +420,22 @@
   .safe-x {
     padding-left: max(env(safe-area-inset-left), 1rem);
     padding-right: max(env(safe-area-inset-right), 1rem);
+  }
+
+  /* Text opacity utilities for glass design */
+  .text-white-95 {
+    color: rgba(255, 255, 255, 0.95);
+  }
+  .text-white-70 {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .text-white-50 {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .text-white-40 {
+    color: rgba(255, 255, 255, 0.4);
+  }
+  .text-white-30 {
+    color: rgba(255, 255, 255, 0.3);
   }
 }

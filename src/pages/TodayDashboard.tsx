@@ -118,6 +118,7 @@ export default function TodayDashboard() {
       setIsCopying(false);
     }
   };
+
   const getDateLabel = () => {
     if (isSelectedToday) return 'Today';
     if (format(subDays(new Date(), 1), 'yyyy-MM-dd') === selectedDate) return 'Yesterday';
@@ -125,121 +126,167 @@ export default function TodayDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-28">
-      {/* Header with date navigation */}
-      <div className="sticky top-0 z-40 bg-background safe-top safe-x pb-2">
-        {/* Title row */}
-        <div className="pt-4 pb-2 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-1">MACRO TRACKER</p>
-            <h1 className="text-3xl font-bold text-foreground">{getDateLabel()}</h1>
-          </div>
-          
-          {/* Date navigation */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={goToPreviousDay}
-              className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-sm hover:bg-muted transition-colors"
+    <main className="relative min-h-screen pb-[calc(env(safe-area-inset-bottom)+140px)] glass-scope">
+      {/* Atmospheric background particles */}
+      <div className="home-atmosphere" aria-hidden="true">
+        <span className="home-particle" />
+        <span className="home-particle" />
+        <span className="home-particle" />
+        <span className="home-particle" />
+        <span className="home-particle" />
+      </div>
+
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-transparent">
+        <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-3">
+          <div className="flex-1 text-left min-w-0 space-y-1">
+            <div 
+              className="section-label"
+              style={{ fontSize: '10px', fontWeight: 500 }}
             >
-              <ChevronLeft className="w-5 h-5 text-foreground" />
-            </button>
-            <button
-              onClick={goToNextDay}
-              className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-sm hover:bg-muted transition-colors"
+              MACRO TRACKER
+            </div>
+            <h1 
+              className="text-foreground dark:text-white/95"
+              style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-0.02em' }}
             >
-              <ChevronRight className="w-5 h-5 text-foreground" />
-            </button>
+              {getDateLabel()}
+            </h1>
             {!isSelectedToday && (
-              <button
-                onClick={goToToday}
-                className="h-10 px-3 rounded-full bg-primary text-primary-foreground flex items-center gap-1 shadow-sm text-sm font-medium"
+              <p 
+                className="text-muted-foreground dark:text-white/40"
+                style={{ fontSize: '13px', fontWeight: 500 }}
               >
-                <Calendar className="w-4 h-4" />
-                Today
-              </button>
+                {format(selectedDateObj, 'MMMM d, yyyy')}
+              </p>
+            )}
+            {isSelectedToday && (
+              <p 
+                className="text-muted-foreground dark:text-white/40"
+                style={{ fontSize: '13px', fontWeight: 500 }}
+              >
+                {format(selectedDateObj, 'MMM d, yyyy')}
+              </p>
+            )}
+          </div>
+
+          {/* Date navigation */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToPreviousDay}
+              aria-label="Previous day"
+              className="h-10 w-10"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToNextDay}
+              aria-label="Next day"
+              className="h-10 w-10"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </Button>
+            {!isSelectedToday && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToToday}
+                aria-label="Go to today"
+                className="h-10 w-10"
+              >
+                <Calendar className="w-6 h-6" />
+              </Button>
             )}
           </div>
         </div>
+      </header>
 
-        {/* Date subtitle */}
-        {!isSelectedToday && (
-          <p className="text-sm text-muted-foreground mb-2">
-            {format(selectedDateObj, 'MMMM d, yyyy')}
-          </p>
-        )}
-
-        {/* Macro summary card */}
-        <div className="bg-gradient-primary rounded-3xl p-4 shadow-lg">
-          <div className="text-xs text-white/70 font-medium uppercase tracking-widest mb-3">
-            Remaining
+      {/* Content */}
+      <div className="relative z-10 px-6 pt-4 space-y-6">
+        {/* Hero macro summary card */}
+        <section>
+          <div className="glass-hero p-5">
+            <div 
+              className="section-label mb-3"
+              style={{ color: 'rgba(255, 255, 255, 0.4)' }}
+            >
+              REMAINING
+            </div>
+            
+            <div className="flex gap-2">
+              <MacroItem label="Cal" value={remaining.calories} isOver={remaining.calories < 0} />
+              <MacroItem label="Protein" value={remaining.protein} isOver={remaining.protein < 0} />
+              <MacroItem label="Carbs" value={remaining.carbs} isOver={remaining.carbs < 0} />
+              <MacroItem label="Fat" value={remaining.fat} isOver={remaining.fat < 0} />
+            </div>
           </div>
+        </section>
+
+        {/* Meals section */}
+        <section className="space-y-3">
+          <div className="section-label">MEALS</div>
           
-          <div className="flex gap-2">
-            <MacroItem label="Cal" value={remaining.calories} isOver={remaining.calories < 0} />
-            <MacroItem label="Protein" value={remaining.protein} isOver={remaining.protein < 0} />
-            <MacroItem label="Carbs" value={remaining.carbs} isOver={remaining.carbs < 0} />
-            <MacroItem label="Fat" value={remaining.fat} isOver={remaining.fat < 0} />
-          </div>
-        </div>
+          {/* Copy Yesterday button */}
+          {canCopyYesterday && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <button
+                onClick={handleCopyYesterday}
+                disabled={isCopying}
+                className="w-full glass-card p-4 flex items-center justify-center gap-2 text-primary font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
+              >
+                <Copy className="w-4 h-4" />
+                {isCopying ? 'Copying...' : `Copy Yesterday's Meals (${yesterdayEntries.length} items)`}
+              </button>
+            </motion.div>
+          )}
+
+          {meals.map(({ key, defaultName }, index) => (
+            <motion.div
+              key={key}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05, duration: 0.3 }}
+            >
+              <MealSection
+                title={settings.mealNames?.[key] || defaultName}
+                meal={key}
+                entries={getEntriesByMeal(selectedDate, key)}
+                totals={getMealTotals(selectedDate, key)}
+                preferredUnit={settings.preferredUnit}
+                onAddFood={handleAddFood}
+                onEditEntry={handleEditEntry}
+                onDeleteEntry={handleDeleteEntry}
+                onDuplicateEntry={handleDuplicateEntry}
+              />
+            </motion.div>
+          ))}
+        </section>
       </div>
 
-      <main className="px-4 py-2 space-y-3">
-        {/* Copy Yesterday button - show when today is empty but yesterday has entries */}
-        {canCopyYesterday && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Button
-              variant="outline"
-              onClick={handleCopyYesterday}
-              disabled={isCopying}
-              className="w-full h-12 gap-2 bg-card border-dashed border-2 hover:bg-muted"
-            >
-              <Copy className="w-4 h-4" />
-              {isCopying ? 'Copying...' : `Copy Yesterday's Meals (${yesterdayEntries.length} items)`}
-            </Button>
-          </motion.div>
-        )}
-
-        {meals.map(({ key, defaultName }, index) => (
-          <motion.div
-            key={key}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05, duration: 0.3 }}
-          >
-            <MealSection
-              title={settings.mealNames?.[key] || defaultName}
-              meal={key}
-              entries={getEntriesByMeal(selectedDate, key)}
-              totals={getMealTotals(selectedDate, key)}
-              preferredUnit={settings.preferredUnit}
-              onAddFood={handleAddFood}
-              onEditEntry={handleEditEntry}
-              onDeleteEntry={handleDeleteEntry}
-              onDuplicateEntry={handleDuplicateEntry}
-            />
-          </motion.div>
-        ))}
-      </main>
-
       {/* Floating buttons */}
-      <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-3">
+      <div className="fixed bottom-32 right-6 z-40 flex flex-col gap-3">
         {/* Quick Add button */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring' }}
         >
-          <Button
-            size="lg"
-            variant="secondary"
+          <button
             onClick={() => setShowQuickAdd(true)}
-            className="h-12 w-12 rounded-full shadow-lg"
+            className="h-12 w-12 rounded-full flex items-center justify-center glass-card hover:bg-white/10 transition-colors"
+            style={{
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+            }}
           >
-            <Zap className="w-5 h-5" />
-          </Button>
+            <Zap className="w-5 h-5 text-primary" />
+          </button>
         </motion.div>
 
         {/* Add Food button */}
@@ -248,13 +295,16 @@ export default function TodayDashboard() {
           animate={{ scale: 1 }}
           transition={{ delay: 0.3, type: 'spring' }}
         >
-          <Button
-            size="lg"
+          <button
             onClick={() => navigate('/log')}
-            className="h-14 w-14 rounded-full shadow-lg shadow-primary/30 bg-gradient-primary hover:opacity-90"
+            className="h-14 w-14 rounded-full flex items-center justify-center transition-all active:scale-95"
+            style={{
+              background: 'linear-gradient(135deg, hsl(12, 65%, 55%) 0%, hsl(8, 55%, 45%) 100%)',
+              boxShadow: '0 8px 24px rgba(255, 87, 51, 0.35), 0 0 20px rgba(255, 87, 51, 0.15)',
+            }}
           >
-            <Plus className="w-6 h-6" />
-          </Button>
+            <Plus className="w-6 h-6 text-white" />
+          </button>
         </motion.div>
       </div>
 
@@ -266,18 +316,35 @@ export default function TodayDashboard() {
         onClose={() => setShowQuickAdd(false)}
         onSave={handleQuickAdd}
       />
-    </div>
+    </main>
   );
 }
 
 function MacroItem({ label, value, isOver }: { label: string; value: number; isOver: boolean }) {
   return (
     <div className="flex-1 text-center">
-      <div className="rounded-2xl p-3 bg-black/20 dark:bg-black/30">
-        <div className={`text-2xl font-bold font-tabular leading-none ${isOver ? 'text-red-300' : 'text-white'}`}>
+      <div 
+        className="rounded-2xl p-3"
+        style={{ background: 'rgba(0, 0, 0, 0.2)' }}
+      >
+        <div 
+          className="font-tabular leading-none"
+          style={{ 
+            fontSize: '26px', 
+            fontWeight: 800, 
+            letterSpacing: '-0.03em',
+            color: isOver ? 'rgba(239, 68, 68, 0.85)' : 'rgba(255, 255, 255, 0.95)'
+          }}
+        >
           {Math.round(value)}
         </div>
-        <div className="text-[10px] text-white/70 font-medium uppercase tracking-wider mt-1">
+        <div 
+          className="font-medium uppercase tracking-wider mt-1"
+          style={{ 
+            fontSize: '10px', 
+            color: 'rgba(255, 255, 255, 0.5)' 
+          }}
+        >
           {label}
         </div>
       </div>
