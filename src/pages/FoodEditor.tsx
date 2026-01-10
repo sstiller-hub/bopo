@@ -4,8 +4,9 @@ import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useFoods } from '@/hooks/useNutritionStore';
-import { Macros } from '@/types/nutrition';
+import { UnitToggle } from '@/components/UnitToggle';
+import { useFoods, useSettings } from '@/hooks/useNutritionStore';
+import { Macros, gramsToOunces, ouncesToGrams } from '@/types/nutrition';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -34,13 +35,15 @@ export default function FoodEditor() {
   const meal = searchParams.get('meal');
   
   const { foods, addFood, updateFood, deleteFood } = useFoods();
+  const { settings } = useSettings();
   const existingFood = editId ? foods.find(f => f.id === editId) : null;
   
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const [barcode, setBarcode] = useState('');
-  const [nutritionBasis, setNutritionBasis] = useState<NutritionBasis>('per_100g');
-  const [servingGrams, setServingGrams] = useState('');
+  const [nutritionBasis, setNutritionBasis] = useState<NutritionBasis>('per_serving');
+  const [servingValue, setServingValue] = useState('');
+  const [servingUnit, setServingUnit] = useState<'g' | 'oz'>(settings.preferredUnit);
   const [calories, setCalories] = useState('');
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
@@ -50,6 +53,25 @@ export default function FoodEditor() {
 
   // Check if we have prefill data from URL params
   const hasPrefillData = prefillName || prefillCalories || prefillProtein || prefillCarbs || prefillFat;
+
+  // Convert serving value to grams for storage
+  const getServingGrams = (): number => {
+    const value = parseFloat(servingValue) || 0;
+    return servingUnit === 'oz' ? ouncesToGrams(value) : value;
+  };
+
+  // Handle unit change with conversion
+  const handleUnitChange = (newUnit: 'g' | 'oz') => {
+    if (servingValue && !isNaN(parseFloat(servingValue))) {
+      const currentValue = parseFloat(servingValue);
+      if (newUnit === 'oz' && servingUnit === 'g') {
+        setServingValue(gramsToOunces(currentValue).toFixed(1));
+      } else if (newUnit === 'g' && servingUnit === 'oz') {
+        setServingValue(ouncesToGrams(currentValue).toFixed(0));
+      }
+    }
+    setServingUnit(newUnit);
+  };
 
   // Initialize from existing food or prefill
   useEffect(() => {
@@ -71,7 +93,12 @@ export default function FoodEditor() {
       }
       
       if (existingFood.servingGrams) {
-        setServingGrams(existingFood.servingGrams.toString());
+        // Display in user's preferred unit
+        if (servingUnit === 'oz') {
+          setServingValue(gramsToOunces(existingFood.servingGrams).toFixed(1));
+        } else {
+          setServingValue(existingFood.servingGrams.toString());
+        }
       }
     } else if (hasPrefillData) {
       // Pre-fill from URL params (from scanned/searched product)
@@ -105,8 +132,8 @@ export default function FoodEditor() {
     if (!fat || parseFloat(fat) < 0) {
       newErrors.fat = 'Valid fat required';
     }
-    if (nutritionBasis === 'per_serving' && (!servingGrams || parseFloat(servingGrams) <= 0)) {
-      newErrors.servingGrams = 'Serving size required';
+    if (nutritionBasis === 'per_serving' && (!servingValue || parseFloat(servingValue) <= 0)) {
+      newErrors.servingValue = 'Serving size required';
     }
     
     setErrors(newErrors);
@@ -132,7 +159,7 @@ export default function FoodEditor() {
         ? { macrosPer100g: macros }
         : { 
             macrosPerServing: macros, 
-            servingGrams: parseFloat(servingGrams) 
+            servingGrams: getServingGrams()
           }
       ),
     };
@@ -258,17 +285,20 @@ export default function FoodEditor() {
 
           {nutritionBasis === 'per_serving' && (
             <div className="space-y-2">
-              <Label htmlFor="serving" className="text-sm text-muted-foreground">Serving Size (grams) *</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="serving" className="text-sm text-muted-foreground">Serving Size *</Label>
+                <UnitToggle value={servingUnit} onChange={handleUnitChange} size="sm" />
+              </div>
               <Input
                 id="serving"
                 type="number"
                 inputMode="decimal"
-                value={servingGrams}
-                onChange={(e) => setServingGrams(e.target.value)}
-                placeholder="e.g., 85"
-                className={cn('bg-background border-0 rounded-xl', errors.servingGrams && 'ring-2 ring-destructive')}
+                value={servingValue}
+                onChange={(e) => setServingValue(e.target.value)}
+                placeholder={servingUnit === 'g' ? 'e.g., 85' : 'e.g., 3'}
+                className={cn('bg-background border-0 rounded-xl', errors.servingValue && 'ring-2 ring-destructive')}
               />
-              {errors.servingGrams && <p className="text-sm text-destructive">{errors.servingGrams}</p>}
+              {errors.servingValue && <p className="text-sm text-destructive">{errors.servingValue}</p>}
             </div>
           )}
         </div>
