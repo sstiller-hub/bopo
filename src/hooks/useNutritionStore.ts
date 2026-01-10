@@ -452,34 +452,34 @@ export function useEntries() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch entries (last 30 days)
-  useEffect(() => {
+  const fetchEntries = useCallback(async () => {
     if (!user) {
       setEntries([]);
       setLoading(false);
       return;
     }
 
-    async function fetchEntries() {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const dateStr = `${thirtyDaysAgo.getFullYear()}-${String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(thirtyDaysAgo.getDate()).padStart(2, '0')}`;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const dateStr = `${thirtyDaysAgo.getFullYear()}-${String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(thirtyDaysAgo.getDate()).padStart(2, '0')}`;
 
-      const { data } = await supabase
-        .from('entries')
-        .select('*')
-        .eq('user_id', user!.id)
-        .gte('date', dateStr)
-        .order('created_at', { ascending: false });
+    const { data } = await supabase
+      .from('entries')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('date', dateStr)
+      .order('created_at', { ascending: false });
 
-      if (data) {
-        setEntries(data.map((d) => dbEntryToEntry(d as DbEntry)));
-      }
-      setLoading(false);
+    if (data) {
+      setEntries(data.map((d) => dbEntryToEntry(d as DbEntry)));
     }
-
-    fetchEntries();
+    setLoading(false);
   }, [user]);
+
+  // Fetch entries (last 30 days) on mount
+  useEffect(() => {
+    fetchEntries();
+  }, [fetchEntries]);
 
   const addEntry = useCallback(async (entry: Omit<Entry, 'id' | 'createdAt'>) => {
     if (!user) return null;
@@ -770,6 +770,7 @@ export function useEntries() {
   return {
     entries,
     loading,
+    refetch: fetchEntries,
     addEntry,
     updateEntry,
     deleteEntry,
