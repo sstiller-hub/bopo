@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Save, RefreshCw, LogOut, ChevronRight, Sun, Moon, Monitor, Bookmark, Zap, ExternalLink } from 'lucide-react';
+import { Save, RefreshCw, LogOut, ChevronRight, Sun, Moon, Monitor, Bookmark, Zap, ExternalLink, Scale } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { UnitToggle } from '@/components/UnitToggle';
 import { Button } from '@/components/ui/button';
@@ -162,6 +162,31 @@ export default function SettingsPage() {
                 <div className="font-semibold text-foreground">Meal Templates</div>
                 <div className="text-sm text-muted-foreground">
                   {templates.length} saved template{templates.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </motion.div>
+
+        {/* Log Weight Link */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <button
+            onClick={() => navigate('/log-weight')}
+            className="w-full bg-card rounded-2xl p-4 shadow-sm flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Scale className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="text-left">
+                <div className="font-semibold text-foreground">Log Weight</div>
+                <div className="text-sm text-muted-foreground">
+                  Track your body weight
                 </div>
               </div>
             </div>

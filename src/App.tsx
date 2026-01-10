@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import TodayDashboard from "./pages/TodayDashboard";
 import LogFood from "./pages/LogFood";
+import LogWeight from "./pages/LogWeight";
 import ConfirmEntry from "./pages/ConfirmEntry";
 import FoodLibrary from "./pages/FoodLibrary";
 import FoodEditor from "./pages/FoodEditor";
@@ -51,6 +52,7 @@ function AppRoutes() {
       <Route path="/auth" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
       <Route path="/" element={<ProtectedRoute><TodayDashboard /></ProtectedRoute>} />
       <Route path="/log" element={<ProtectedRoute><LogFood /></ProtectedRoute>} />
+      <Route path="/log-weight" element={<ProtectedRoute><LogWeight /></ProtectedRoute>} />
       <Route path="/confirm" element={<ProtectedRoute><ConfirmEntry /></ProtectedRoute>} />
       <Route path="/foods" element={<ProtectedRoute><FoodLibrary /></ProtectedRoute>} />
       <Route path="/foods/new" element={<ProtectedRoute><FoodEditor /></ProtectedRoute>} />
