@@ -121,17 +121,17 @@ export function MealSection({
         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
           {/* Mini macro summary - tighter spacing */}
           <div className="flex items-center gap-1.5 text-xs font-tabular">
-            <span className={cn("font-semibold", isCompleted ? "text-muted-foreground" : "text-calories")}>
+            <span className={cn("font-semibold", isCompleted || totals.calories === 0 ? "text-muted-foreground" : "text-calories")}>
               {Math.round(totals.calories)}
             </span>
             <span className="text-muted-foreground/40">·</span>
-            <span className={isCompleted ? "text-muted-foreground" : "text-protein"}>
+            <span className={isCompleted || totals.protein === 0 ? "text-muted-foreground" : "text-protein"}>
               {Math.round(totals.protein)}P
             </span>
-            <span className={isCompleted ? "text-muted-foreground" : "text-carbs"}>
+            <span className={isCompleted || totals.carbs === 0 ? "text-muted-foreground" : "text-carbs"}>
               {Math.round(totals.carbs)}C
             </span>
-            <span className={isCompleted ? "text-muted-foreground" : "text-fat"}>
+            <span className={isCompleted || totals.fat === 0 ? "text-muted-foreground" : "text-fat"}>
               {Math.round(totals.fat)}F
             </span>
           </div>
