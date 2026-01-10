@@ -78,19 +78,19 @@ export function MealSection({
           !isCompleted && "hover:bg-white/5 dark:hover:bg-white/5"
         )}
       >
-        <div className="flex items-center gap-3">
-          {/* Completion indicator - subtle inline checkmark */}
+        <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
+          {/* Completion indicator - subtle square checkbox */}
           {entries.length > 0 && onToggleCompleted && (
             <div
               onClick={handleToggleCompleted}
               className={cn(
-                "w-5 h-5 rounded-full flex items-center justify-center transition-all cursor-pointer",
+                "w-4 h-4 rounded flex items-center justify-center transition-all cursor-pointer flex-shrink-0",
                 isCompleted 
                   ? "bg-primary/20 text-primary" 
-                  : "border border-white/20 text-transparent hover:border-white/40 hover:text-white/30"
+                  : "border border-white/25 text-transparent hover:border-white/40 hover:text-white/30"
               )}
             >
-              <Check className="w-3 h-3" />
+              <Check className="w-2.5 h-2.5" />
             </div>
           )}
           
@@ -102,17 +102,17 @@ export function MealSection({
           )}>
             {title}
           </span>
-          <span className="text-sm text-muted-foreground dark:text-white/45 font-tabular">
-            {entries.length} {entries.length === 1 ? 'item' : 'items'}
+          <span className="text-xs text-muted-foreground dark:text-white/45 font-tabular flex-shrink-0">
+            {entries.length}
           </span>
         </div>
-        <div className="flex items-center gap-4">
-          {/* Mini macro summary */}
-          <div className="flex items-center gap-3 text-xs font-tabular">
+        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+          {/* Mini macro summary - tighter spacing */}
+          <div className="flex items-center gap-1.5 text-xs font-tabular">
             <span className={cn("font-semibold", isCompleted ? "text-muted-foreground" : "text-calories")}>
               {Math.round(totals.calories)}
             </span>
-            <span className="text-muted-foreground/50 dark:text-white/20">•</span>
+            <span className="text-muted-foreground/40">·</span>
             <span className={isCompleted ? "text-muted-foreground" : "text-protein"}>
               {Math.round(totals.protein)}P
             </span>
@@ -125,7 +125,7 @@ export function MealSection({
           </div>
           <ChevronDown 
             className={cn(
-              'w-5 h-5 text-muted-foreground dark:text-white/50 transition-transform',
+              'w-4 h-4 text-muted-foreground dark:text-white/50 transition-transform flex-shrink-0',
               isExpanded && 'rotate-180'
             )} 
           />
