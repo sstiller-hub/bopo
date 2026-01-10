@@ -4,54 +4,54 @@
 
 @layer base {
   :root {
-    /* Warm gray background like KovaFit */
-    --background: 30 10% 96%;
-    --foreground: 0 0% 15%;
+    /* Cool gray background */
+    --background: 210 15% 96%;
+    --foreground: 220 15% 15%;
 
     /* Cards with clean white */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 15%;
+    --card-foreground: 220 15% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 15%;
+    --popover-foreground: 220 15% 15%;
 
-    /* Primary - Warm coral/salmon like KovaFit */
-    --primary: 10 70% 55%;
+    /* Primary - Beautiful blue */
+    --primary: 210 85% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 15 80% 92%;
+    --primary-soft: 210 80% 94%;
 
-    /* Secondary - soft blush */
-    --secondary: 20 30% 95%;
-    --secondary-foreground: 0 0% 25%;
+    /* Secondary - cool slate */
+    --secondary: 210 20% 95%;
+    --secondary-foreground: 220 15% 25%;
 
     /* Muted */
-    --muted: 30 10% 93%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 210 15% 93%;
+    --muted-foreground: 220 10% 45%;
 
-    /* Accent - peach tones */
-    --accent: 20 70% 94%;
-    --accent-foreground: 10 70% 40%;
+    /* Accent - light blue tones */
+    --accent: 210 70% 94%;
+    --accent-foreground: 210 85% 40%;
 
     /* Destructive */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders - very subtle */
-    --border: 30 15% 90%;
-    --input: 30 15% 90%;
-    --ring: 10 70% 55%;
+    --border: 210 15% 90%;
+    --input: 210 15% 90%;
+    --ring: 210 85% 55%;
 
     --radius: 1.25rem;
 
-    /* Macro colors - warm, cohesive palette */
-    --calories: 10 70% 55%;
-    --calories-light: 15 80% 94%;
-    --protein: 350 65% 55%;
-    --protein-light: 350 70% 95%;
-    --carbs: 200 70% 50%;
-    --carbs-light: 200 70% 94%;
-    --fat: 40 85% 55%;
-    --fat-light: 40 80% 94%;
+    /* Macro colors - cohesive palette */
+    --calories: 210 85% 55%;
+    --calories-light: 210 80% 94%;
+    --protein: 280 65% 55%;
+    --protein-light: 280 70% 95%;
+    --carbs: 45 85% 55%;
+    --carbs-light: 45 80% 94%;
+    --fat: 340 70% 55%;
+    --fat-light: 340 70% 95%;
 
     /* Success states */
     --success: 150 60% 45%;
@@ -63,48 +63,48 @@
     --warning-foreground: 0 0% 100%;
 
     /* Gradient for cards */
-    --gradient-primary: linear-gradient(135deg, hsl(15, 75%, 92%) 0%, hsl(10, 70%, 80%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(15, 80%, 92%) 0%, hsl(10, 70%, 85%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(210, 80%, 94%) 0%, hsl(210, 75%, 85%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(210, 80%, 94%) 0%, hsl(210, 75%, 88%) 100%);
 
-    /* Sidebar - matching warm tones */
+    /* Sidebar - matching cool tones */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 25%;
-    --sidebar-primary: 10 70% 55%;
+    --sidebar-foreground: 220 15% 25%;
+    --sidebar-primary: 210 85% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 20 70% 94%;
-    --sidebar-accent-foreground: 10 70% 40%;
-    --sidebar-border: 30 15% 92%;
-    --sidebar-ring: 10 70% 55%;
+    --sidebar-accent: 210 70% 94%;
+    --sidebar-accent-foreground: 210 85% 40%;
+    --sidebar-border: 210 15% 92%;
+    --sidebar-ring: 210 85% 55%;
   }
 
   .dark {
-    /* Near-black background like KovaFit */
-    --background: 0 0% 7%;
+    /* Near-black background */
+    --background: 220 15% 7%;
     --foreground: 0 0% 95%;
 
-    /* Cards - warm brownish dark gray with glass effect */
-    --card: 20 8% 13%;
+    /* Cards - cool dark gray with glass effect */
+    --card: 215 15% 13%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 20 8% 13%;
+    --popover: 215 15% 13%;
     --popover-foreground: 0 0% 95%;
 
-    /* Primary - warm coral/salmon */
-    --primary: 10 65% 55%;
+    /* Primary - vibrant blue */
+    --primary: 210 80% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 10 30% 18%;
+    --primary-soft: 210 40% 18%;
 
     /* Secondary */
-    --secondary: 20 6% 16%;
+    --secondary: 215 12% 16%;
     --secondary-foreground: 0 0% 80%;
 
     /* Muted - for subtle text and backgrounds */
-    --muted: 20 6% 16%;
-    --muted-foreground: 0 0% 50%;
+    --muted: 215 12% 16%;
+    --muted-foreground: 220 10% 50%;
 
     /* Accent */
-    --accent: 20 10% 18%;
-    --accent-foreground: 10 60% 65%;
+    --accent: 215 15% 18%;
+    --accent-foreground: 210 70% 65%;
 
     /* Destructive */
     --destructive: 0 72% 55%;
@@ -112,18 +112,18 @@
 
     /* Borders - very subtle */
     --border: 0 0% 100% / 0.1;
-    --input: 20 6% 18%;
-    --ring: 10 65% 55%;
+    --input: 215 12% 18%;
+    --ring: 210 80% 55%;
 
     /* Macro colors for dark mode */
-    --calories: 10 65% 58%;
-    --calories-light: 10 25% 16%;
-    --protein: 350 60% 58%;
-    --protein-light: 350 30% 16%;
-    --carbs: 200 65% 55%;
-    --carbs-light: 200 30% 16%;
-    --fat: 40 80% 55%;
-    --fat-light: 40 30% 16%;
+    --calories: 210 75% 58%;
+    --calories-light: 210 35% 16%;
+    --protein: 280 60% 60%;
+    --protein-light: 280 30% 16%;
+    --carbs: 45 80% 55%;
+    --carbs-light: 45 35% 16%;
+    --fat: 340 65% 58%;
+    --fat-light: 340 30% 16%;
 
     /* Success - green for percentages */
     --success: 145 55% 48%;
@@ -132,19 +132,19 @@
     /* Warning */
     --warning: 35 85% 55%;
 
-    /* Gradient for hero card - warm coral gradient like KovaFit */
-    --gradient-primary: linear-gradient(135deg, hsl(12, 60%, 48%) 0%, hsl(8, 55%, 40%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(15, 35%, 22%) 0%, hsl(12, 30%, 18%) 100%);
+    /* Gradient for hero card - blue gradient */
+    --gradient-primary: linear-gradient(135deg, hsl(210, 70%, 50%) 0%, hsl(215, 65%, 40%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(215, 35%, 20%) 0%, hsl(220, 30%, 16%) 100%);
 
     /* Sidebar / Bottom nav */
-    --sidebar-background: 0 0% 9%;
+    --sidebar-background: 220 15% 9%;
     --sidebar-foreground: 0 0% 75%;
-    --sidebar-primary: 10 65% 55%;
+    --sidebar-primary: 210 80% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 20 6% 14%;
+    --sidebar-accent: 215 12% 14%;
     --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 20 6% 16%;
-    --sidebar-ring: 10 65% 55%;
+    --sidebar-border: 215 12% 16%;
+    --sidebar-ring: 210 80% 55%;
   }
 }
 
@@ -195,7 +195,7 @@
   /* Hero gradient card */
   .glass-hero {
     @apply relative overflow-hidden rounded-3xl backdrop-blur-xl;
-    background: linear-gradient(135deg, rgba(255, 87, 51, 0.25) 0%, rgba(255, 60, 30, 0.15) 50%, rgba(200, 40, 20, 0.2) 100%);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.15) 50%, rgba(29, 78, 216, 0.2) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 
       0 10px 30px rgba(0, 0, 0, 0.35),
@@ -209,16 +209,16 @@
 
   .home-atmosphere {
     @apply fixed inset-0 pointer-events-none overflow-hidden;
-    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 87, 51, 0.12), transparent 70%);
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.12), transparent 70%);
   }
 
   .dark .home-atmosphere {
-    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 87, 51, 0.15), transparent 70%);
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.18), transparent 70%);
   }
 
   .home-particle {
     @apply absolute rounded-full;
-    background: rgba(255, 87, 51, 0.15);
+    background: rgba(59, 130, 246, 0.15);
     animation: float-particle 20s infinite ease-in-out;
   }
 
@@ -388,21 +388,21 @@
     color: hsl(var(--success));
   }
 
-  /* Gradient card like KovaFit */
+  /* Gradient card */
   .bg-gradient-card {
-    background: linear-gradient(180deg, hsl(15, 80%, 92%) 0%, hsl(10, 70%, 85%) 100%);
+    background: linear-gradient(180deg, hsl(210, 80%, 94%) 0%, hsl(210, 75%, 88%) 100%);
   }
 
   .dark .bg-gradient-card {
-    background: linear-gradient(180deg, hsl(15, 30%, 20%) 0%, hsl(12, 25%, 16%) 100%);
+    background: linear-gradient(180deg, hsl(215, 35%, 20%) 0%, hsl(220, 30%, 16%) 100%);
   }
 
   .bg-gradient-primary {
-    background: linear-gradient(135deg, hsl(12, 58%, 52%) 0%, hsl(8, 52%, 42%) 100%);
+    background: linear-gradient(135deg, hsl(210, 75%, 52%) 0%, hsl(215, 70%, 42%) 100%);
   }
 
   .dark .bg-gradient-primary {
-    background: linear-gradient(135deg, hsl(12, 55%, 48%) 0%, hsl(8, 50%, 38%) 100%);
+    background: linear-gradient(135deg, hsl(210, 70%, 50%) 0%, hsl(215, 65%, 40%) 100%);
   }
 
   /* Number font for macros */
