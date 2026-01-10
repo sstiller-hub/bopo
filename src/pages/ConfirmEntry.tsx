@@ -52,7 +52,7 @@ export default function ConfirmEntry() {
     return foods.find(f => f.id === foodId);
   }, [foodId, existingEntry, foods]);
 
-  // Initialize from existing entry
+  // Initialize from existing entry or default to serving size
   useEffect(() => {
     if (existingEntry) {
       setSelectedMeal(existingEntry.meal);
@@ -60,6 +60,13 @@ export default function ConfirmEntry() {
       const displayAmount = unit === 'oz' 
         ? gramsToOunces(existingEntry.amountGrams).toFixed(1)
         : existingEntry.amountGrams.toString();
+      setAmountValue(displayAmount);
+    } else if (food) {
+      // Default to serving size if available, otherwise 100g
+      const defaultGrams = food.servingGrams || 100;
+      const displayAmount = unit === 'oz' 
+        ? gramsToOunces(defaultGrams).toFixed(1)
+        : defaultGrams.toString();
       setAmountValue(displayAmount);
     }
     if (food) {
