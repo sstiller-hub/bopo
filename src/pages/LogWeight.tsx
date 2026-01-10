@@ -85,7 +85,16 @@ export default function LogWeight() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3 safe-top">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2">
+          <button 
+            onClick={() => {
+              if (window.history.length > 2) {
+                navigate(-1);
+              } else {
+                navigate('/settings');
+              }
+            }} 
+            className="p-2 -ml-2"
+          >
             <ArrowLeft className="w-6 h-6 text-foreground" />
           </button>
           <h1 className="font-semibold text-foreground">Log Weight</h1>

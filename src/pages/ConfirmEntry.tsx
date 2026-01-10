@@ -148,7 +148,13 @@ export default function ConfirmEntry() {
       <div className="px-5 pt-12 pb-4 safe-top">
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (window.history.length > 2) {
+                navigate(-1);
+              } else {
+                navigate('/');
+              }
+            }}
             className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-sm"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
