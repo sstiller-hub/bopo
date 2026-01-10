@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, ChevronLeft, ChevronRight, Calendar, Zap, Copy, Package, X, Check } from 'lucide-react';
@@ -24,7 +24,7 @@ export default function TodayDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { settings, loading: settingsLoading } = useSettings();
-  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate, getIngredients, groupAsRecipe, ungroupRecipe, getWeeklyAverages, loading: entriesLoading } = useEntries();
+  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate, getIngredients, groupAsRecipe, ungroupRecipe, getWeeklyAverages, refetch: refetchEntries, loading: entriesLoading } = useEntries();
   const { loading: foodsLoading } = useFoods();
   const { templates, createTemplate, getTemplatesForMeal, incrementUsage } = useMealTemplates();
   
@@ -46,6 +46,28 @@ export default function TodayDashboard() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isGrouping, setIsGrouping] = useState(false);
   const [completedMeals, setCompletedMeals] = useState<Set<MealType>>(new Set());
+
+  // Refetch entries when page becomes visible (e.g., after navigating back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchEntries();
+      }
+    };
+    
+    // Also refetch on focus (for SPA navigation)
+    const handleFocus = () => {
+      refetchEntries();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [refetchEntries]);
 
   // Check if yesterday has entries and today is empty
   const yesterdayEntries = getEntriesForDate(yesterdayDate);
