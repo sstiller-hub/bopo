@@ -363,7 +363,22 @@ function ScannedProductPreview({
   onCancel: () => void;
 }) {
   const nutriments = product.nutriments || {};
-  const foodData = convertToFoodData(product);
+  const hasServingData = nutriments['energy-kcal_serving'] !== undefined;
+  
+  // Use serving data if available, otherwise fall back to per 100g
+  const displayMacros = hasServingData ? {
+    calories: Math.round(nutriments['energy-kcal_serving'] || 0),
+    protein: Math.round(nutriments.proteins_serving || 0),
+    carbs: Math.round(nutriments.carbohydrates_serving || 0),
+    fat: Math.round(nutriments.fat_serving || 0),
+  } : {
+    calories: Math.round(nutriments['energy-kcal_100g'] || 0),
+    protein: Math.round(nutriments.proteins_100g || 0),
+    carbs: Math.round(nutriments.carbohydrates_100g || 0),
+    fat: Math.round(nutriments.fat_100g || 0),
+  };
+  
+  const displayLabel = hasServingData ? 'Per Serving' : 'Per 100g';
 
   return (
     <div className="glass-card p-5 space-y-4">
@@ -390,33 +405,33 @@ function ScannedProductPreview({
         </div>
       </div>
 
-      {/* Nutrition per 100g */}
+      {/* Nutrition display */}
       <div className="bg-black/10 dark:bg-black/20 rounded-2xl p-4">
         <p className="text-xs text-muted-foreground dark:text-white/40 uppercase tracking-wider mb-3">
-          Per 100g
+          {displayLabel}
         </p>
         <div className="grid grid-cols-4 gap-2 text-center">
           <div>
             <div className="text-lg font-bold text-calories font-tabular">
-              {foodData.macrosPer100g?.calories || 0}
+              {displayMacros.calories}
             </div>
             <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Cal</div>
           </div>
           <div>
             <div className="text-lg font-bold text-protein font-tabular">
-              {foodData.macrosPer100g?.protein || 0}g
+              {displayMacros.protein}g
             </div>
             <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Protein</div>
           </div>
           <div>
             <div className="text-lg font-bold text-carbs font-tabular">
-              {foodData.macrosPer100g?.carbs || 0}g
+              {displayMacros.carbs}g
             </div>
             <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Carbs</div>
           </div>
           <div>
             <div className="text-lg font-bold text-fat font-tabular">
-              {foodData.macrosPer100g?.fat || 0}g
+              {displayMacros.fat}g
             </div>
             <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Fat</div>
           </div>
