@@ -211,40 +211,44 @@ export default function TodayDashboard() {
         <section>
           <div className="glass-hero p-5">
             <div 
-              className="section-label mb-3"
+              className="section-label mb-4"
               style={{ color: 'rgba(255, 255, 255, 0.4)' }}
             >
-              REMAINING
+              DAILY PROGRESS
             </div>
             
-            <div className="grid grid-cols-4 gap-1.5">
-              <MacroItem 
-                label="Cal" 
-                value={remaining.calories} 
+            <div className="space-y-3">
+              <MacroProgressBar 
+                label="Calories" 
+                consumed={consumed.calories} 
                 target={targets.calories}
-                consumed={consumed.calories}
+                unit=""
                 color="hsl(210, 80%, 55%)"
+                glowColor="rgba(59, 130, 246, 0.4)"
               />
-              <MacroItem 
-                label="Pro" 
-                value={remaining.protein} 
+              <MacroProgressBar 
+                label="Protein" 
+                consumed={consumed.protein} 
                 target={targets.protein}
-                consumed={consumed.protein}
-                color="hsl(280, 65%, 58%)"
+                unit="g"
+                color="hsl(280, 65%, 60%)"
+                glowColor="rgba(168, 85, 247, 0.4)"
               />
-              <MacroItem 
-                label="Carb" 
-                value={remaining.carbs} 
+              <MacroProgressBar 
+                label="Carbs" 
+                consumed={consumed.carbs} 
                 target={targets.carbs}
-                consumed={consumed.carbs}
+                unit="g"
                 color="hsl(45, 85%, 55%)"
+                glowColor="rgba(234, 179, 8, 0.4)"
               />
-              <MacroItem 
+              <MacroProgressBar 
                 label="Fat" 
-                value={remaining.fat} 
+                consumed={consumed.fat} 
                 target={targets.fat}
-                consumed={consumed.fat}
+                unit="g"
                 color="hsl(340, 70%, 58%)"
+                glowColor="rgba(236, 72, 153, 0.4)"
               />
             </div>
           </div>
@@ -343,62 +347,95 @@ export default function TodayDashboard() {
   );
 }
 
-function MacroItem({ 
+function MacroProgressBar({ 
   label, 
-  value, 
-  target, 
   consumed, 
-  color 
+  target, 
+  unit,
+  color,
+  glowColor
 }: { 
   label: string; 
-  value: number; 
+  consumed: number; 
   target: number;
-  consumed: number;
+  unit: string;
   color: string;
+  glowColor: string;
 }) {
-  const isOver = value < 0;
+  const remaining = target - consumed;
+  const isOver = remaining < 0;
   const percentage = Math.min((consumed / target) * 100, 100);
+  const displayRemaining = Math.abs(Math.round(remaining));
+  const displayConsumed = Math.round(consumed);
   
   return (
-    <div className="text-center min-w-0">
+    <div className="space-y-1.5">
+      {/* Labels row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span 
+            className="font-semibold text-sm"
+            style={{ color }}
+          >
+            {label}
+          </span>
+          <span 
+            className="font-tabular text-sm"
+            style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+          >
+            {displayConsumed}{unit}
+          </span>
+        </div>
+        <span 
+          className="font-tabular text-xs"
+          style={{ 
+            color: isOver ? 'rgba(239, 68, 68, 0.9)' : 'rgba(255, 255, 255, 0.5)'
+          }}
+        >
+          {isOver ? `${displayRemaining}${unit} over` : `${displayRemaining}${unit} left`}
+        </span>
+      </div>
+      
+      {/* Progress bar */}
       <div 
-        className="rounded-2xl py-3 px-1 relative overflow-hidden"
-        style={{ background: 'rgba(0, 0, 0, 0.2)' }}
+        className="relative h-2 rounded-full overflow-hidden"
+        style={{ background: 'rgba(255, 255, 255, 0.08)' }}
       >
+        {/* Glow effect layer */}
         <div 
-          className="font-tabular leading-none truncate"
+          className="absolute inset-0 rounded-full transition-all duration-700 ease-out"
           style={{ 
-            fontSize: '22px', 
-            fontWeight: 800, 
-            letterSpacing: '-0.03em',
-            color: isOver ? 'rgba(239, 68, 68, 0.85)' : 'rgba(255, 255, 255, 0.95)'
+            width: `${percentage}%`,
+            background: `linear-gradient(90deg, transparent 0%, ${glowColor} 50%, transparent 100%)`,
+            filter: 'blur(4px)',
+            opacity: 0.6
           }}
-        >
-          {Math.round(value)}
-        </div>
-        <div 
-          className="font-medium uppercase tracking-wider mt-1"
-          style={{ 
-            fontSize: '9px', 
-            color: 'rgba(255, 255, 255, 0.5)' 
-          }}
-        >
-          {label}
-        </div>
+        />
         
-        {/* Progress bar */}
+        {/* Main progress bar */}
         <div 
-          className="absolute bottom-0 left-0 right-0 h-1"
-          style={{ background: 'rgba(255, 255, 255, 0.08)' }}
+          className="relative h-full rounded-full transition-all duration-700 ease-out"
+          style={{ 
+            width: `${percentage}%`,
+            background: isOver 
+              ? 'linear-gradient(90deg, rgba(239, 68, 68, 0.7) 0%, rgba(239, 68, 68, 0.9) 100%)' 
+              : `linear-gradient(90deg, ${color}99 0%, ${color} 100%)`,
+            boxShadow: isOver 
+              ? '0 0 12px rgba(239, 68, 68, 0.5)' 
+              : `0 0 12px ${glowColor}`
+          }}
+        />
+        
+        {/* Shimmer effect */}
+        <div 
+          className="absolute inset-0 rounded-full overflow-hidden"
+          style={{ width: `${percentage}%` }}
         >
           <div 
-            className="h-full transition-all duration-500 ease-out"
-            style={{ 
-              width: `${percentage}%`,
-              background: isOver 
-                ? 'rgba(239, 68, 68, 0.8)' 
-                : `linear-gradient(90deg, ${color} 0%, ${color}cc 100%)`,
-              boxShadow: isOver ? 'none' : `0 0 8px ${color}66`
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)',
+              animation: 'shimmer 2s infinite',
             }}
           />
         </div>
