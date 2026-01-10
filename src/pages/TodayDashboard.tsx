@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, ChevronLeft, ChevronRight, Calendar, Zap, Copy, Package, X, Check } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Calendar, Zap, Copy, Package, X, Check, RefreshCw } from 'lucide-react';
 import { format, addDays, subDays, isToday, parseISO } from 'date-fns';
 import { MealSection } from '@/components/MealSection';
 import { BottomNav } from '@/components/BottomNav';
@@ -24,7 +24,7 @@ export default function TodayDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { settings, loading: settingsLoading } = useSettings();
-  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate, getIngredients, groupAsRecipe, ungroupRecipe, getWeeklyAverages, refetch: refetchEntries, loading: entriesLoading } = useEntries();
+  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate, getIngredients, groupAsRecipe, ungroupRecipe, getWeeklyAverages, refetch: refetchEntries, loading: entriesLoading, refreshing } = useEntries();
   const { loading: foodsLoading } = useFoods();
   const { templates, createTemplate, getTemplatesForMeal, incrementUsage } = useMealTemplates();
   
@@ -265,6 +265,21 @@ export default function TodayDashboard() {
 
   return (
     <main className="relative min-h-screen pb-[calc(env(safe-area-inset-bottom)+140px)] glass-scope">
+      {/* Refresh indicator */}
+      {refreshing && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-card/90 backdrop-blur-md shadow-lg border border-white/10"
+          >
+            <RefreshCw className="w-4 h-4 text-primary animate-spin" />
+            <span className="text-sm text-muted-foreground">Syncing...</span>
+          </motion.div>
+        </div>
+      )}
+
       {/* Atmospheric background particles */}
       <div className="home-atmosphere" aria-hidden="true">
         <span className="home-particle" />

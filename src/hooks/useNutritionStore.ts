@@ -451,12 +451,17 @@ export function useEntries() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchEntries = useCallback(async () => {
+  const fetchEntries = useCallback(async (isRefresh = false) => {
     if (!user) {
       setEntries([]);
       setLoading(false);
       return;
+    }
+
+    if (isRefresh) {
+      setRefreshing(true);
     }
 
     const thirtyDaysAgo = new Date();
@@ -474,6 +479,7 @@ export function useEntries() {
       setEntries(data.map((d) => dbEntryToEntry(d as DbEntry)));
     }
     setLoading(false);
+    setRefreshing(false);
   }, [user]);
 
   // Fetch entries (last 30 days) on mount
@@ -770,7 +776,8 @@ export function useEntries() {
   return {
     entries,
     loading,
-    refetch: fetchEntries,
+    refreshing,
+    refetch: (isRefresh = true) => fetchEntries(isRefresh),
     addEntry,
     updateEntry,
     deleteEntry,
