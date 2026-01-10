@@ -40,6 +40,7 @@ export default function TodayDashboard() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isGrouping, setIsGrouping] = useState(false);
+  const [completedMeals, setCompletedMeals] = useState<Set<MealType>>(new Set());
 
   // Check if yesterday has entries and today is empty
   const yesterdayEntries = getEntriesForDate(yesterdayDate);
@@ -164,6 +165,18 @@ export default function TodayDashboard() {
   const handleUngroupRecipe = async (id: string) => {
     await ungroupRecipe(id);
     toast.success('Recipe ungrouped');
+  };
+
+  const handleToggleMealCompleted = (meal: MealType) => {
+    setCompletedMeals(prev => {
+      const next = new Set(prev);
+      if (next.has(meal)) {
+        next.delete(meal);
+      } else {
+        next.add(meal);
+      }
+      return next;
+    });
   };
 
   const getDateLabel = () => {
@@ -395,6 +408,8 @@ export default function TodayDashboard() {
                 selectedIds={selectedIds}
                 onToggleSelect={handleToggleSelect}
                 onUngroupRecipe={handleUngroupRecipe}
+                isCompleted={completedMeals.has(key)}
+                onToggleCompleted={handleToggleMealCompleted}
               />
             </motion.div>
           ))}
