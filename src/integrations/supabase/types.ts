@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      body_weight_entries: {
+        Row: {
+          created_at: string
+          id: string
+          measured_at: string
+          notes: string | null
+          source: string
+          source_row_id: string
+          updated_at: string
+          user_id: string
+          weight_kg: number
+          weight_lb: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          measured_at?: string
+          notes?: string | null
+          source?: string
+          source_row_id: string
+          updated_at?: string
+          user_id: string
+          weight_kg: number
+          weight_lb: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          measured_at?: string
+          notes?: string | null
+          source?: string
+          source_row_id?: string
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number
+          weight_lb?: number
+        }
+        Relationships: []
+      }
       entries: {
         Row: {
           amount_grams: number
