@@ -643,7 +643,7 @@ export function useEntries() {
   }, [entries]);
 
   // Get weekly averages for the last 7 days
-  const getWeeklyAverages = useCallback((): Macros => {
+  const getWeeklyAverages = useCallback((): Macros & { daysWithData: number } => {
     const now = new Date();
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -670,6 +670,7 @@ export function useEntries() {
       protein: Math.round(totals.protein / dayCount),
       carbs: Math.round(totals.carbs / dayCount),
       fat: Math.round(totals.fat / dayCount),
+      daysWithData: daysWithEntries.size,
     };
   }, [entries]);
 
