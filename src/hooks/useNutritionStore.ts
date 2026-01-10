@@ -524,31 +524,76 @@ export function useEntries() {
     const sourceEntries = entries.filter(e => e.date === sourceDate);
     if (sourceEntries.length === 0) return 0;
 
-    const newDbEntries = sourceEntries.map(entry => ({
-      user_id: user.id,
-      date: targetDate,
-      meal: entry.meal,
-      food_id: entry.foodId || null,
-      food_name: entry.foodName,
-      amount_grams: entry.amountGrams,
-      calories: entry.computedMacros.calories,
-      protein: entry.computedMacros.protein,
-      carbs: entry.computedMacros.carbs,
-      fat: entry.computedMacros.fat,
-      note: entry.note || null,
-    }));
+    const parentEntries = sourceEntries.filter(e => !e.parentEntryId);
+    const childEntries = sourceEntries.filter(e => e.parentEntryId);
+    const idMap = new Map<string, string>();
+    const insertedEntries: Entry[] = [];
 
-    const { data, error } = await supabase
-      .from('entries')
-      .insert(newDbEntries)
-      .select();
+    for (const entry of parentEntries) {
+      const { data, error } = await supabase
+        .from('entries')
+        .insert({
+          user_id: user.id,
+          date: targetDate,
+          meal: entry.meal,
+          food_id: entry.foodId || null,
+          food_name: entry.foodName,
+          amount_grams: entry.amountGrams,
+          calories: entry.computedMacros.calories,
+          protein: entry.computedMacros.protein,
+          carbs: entry.computedMacros.carbs,
+          fat: entry.computedMacros.fat,
+          note: entry.note || null,
+          parent_entry_id: null,
+          is_recipe: entry.isRecipe || false,
+        })
+        .select()
+        .single();
 
-    if (data && !error) {
-      const newEntries = data.map((d) => dbEntryToEntry(d as DbEntry));
-      setEntries(prev => [...newEntries, ...prev]);
-      return newEntries.length;
+      if (!data || error) {
+        return 0;
+      }
+
+      const newEntry = dbEntryToEntry(data as DbEntry);
+      idMap.set(entry.id, newEntry.id);
+      insertedEntries.push(newEntry);
     }
-    return 0;
+
+    for (const entry of childEntries) {
+      const newParentId = entry.parentEntryId ? idMap.get(entry.parentEntryId) : null;
+      if (!newParentId) {
+        return 0;
+      }
+
+      const { data, error } = await supabase
+        .from('entries')
+        .insert({
+          user_id: user.id,
+          date: targetDate,
+          meal: entry.meal,
+          food_id: entry.foodId || null,
+          food_name: entry.foodName,
+          amount_grams: entry.amountGrams,
+          calories: entry.computedMacros.calories,
+          protein: entry.computedMacros.protein,
+          carbs: entry.computedMacros.carbs,
+          fat: entry.computedMacros.fat,
+          note: entry.note || null,
+          parent_entry_id: newParentId,
+          is_recipe: entry.isRecipe || false,
+        })
+        .select()
+        .single();
+
+      if (!data || error) {
+        return 0;
+      }
+
+      insertedEntries.push(dbEntryToEntry(data as DbEntry));
+    }
+
+    setEntries(prev => [...insertedEntries, ...prev]);
+    return insertedEntries.length;
   }, [user, entries]);
 
   const updateEntry = useCallback(async (id: string, updates: Partial<Entry>) => {

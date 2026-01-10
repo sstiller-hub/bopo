@@ -117,17 +117,24 @@ export function convertToFoodData(product: OpenFoodFactsProduct) {
   
   // Prefer per 100g values, fall back to serving if not available
   const hasPer100g = nutriments['energy-kcal_100g'] !== undefined;
+  const hasPerServing = nutriments['energy-kcal_serving'] !== undefined;
   
   return {
     name: product.product_name || 'Unknown Product',
     brand: product.brands || undefined,
     barcode: product.code,
-    nutritionBasis: 'per_100g' as const,
+    nutritionBasis: (hasPer100g ? 'per_100g' : 'per_serving') as const,
     macrosPer100g: hasPer100g ? {
       calories: Math.round(nutriments['energy-kcal_100g'] || 0),
       protein: Math.round(nutriments.proteins_100g || 0),
       carbs: Math.round(nutriments.carbohydrates_100g || 0),
       fat: Math.round(nutriments.fat_100g || 0),
+    } : undefined,
+    macrosPerServing: !hasPer100g && hasPerServing ? {
+      calories: Math.round(nutriments['energy-kcal_serving'] || 0),
+      protein: Math.round(nutriments.proteins_serving || 0),
+      carbs: Math.round(nutriments.carbohydrates_serving || 0),
+      fat: Math.round(nutriments.fat_serving || 0),
     } : undefined,
     servingGrams: product.serving_quantity || undefined,
     source: 'open_food_facts' as const,
