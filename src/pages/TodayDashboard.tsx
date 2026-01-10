@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, ChevronLeft, ChevronRight, Calendar, Zap, Copy } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Calendar, Zap, Copy, Package, X, Check } from 'lucide-react';
 import { format, addDays, subDays, isToday, parseISO } from 'date-fns';
 import { MealSection } from '@/components/MealSection';
 import { BottomNav } from '@/components/BottomNav';
@@ -23,7 +23,7 @@ export default function TodayDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { settings, loading: settingsLoading } = useSettings();
-  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate, loading: entriesLoading } = useEntries();
+  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate, getIngredients, groupAsRecipe, ungroupRecipe, loading: entriesLoading } = useEntries();
   const { loading: foodsLoading } = useFoods();
   
   const isLoading = settingsLoading || entriesLoading || foodsLoading;
@@ -37,6 +37,9 @@ export default function TodayDashboard() {
 
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isGrouping, setIsGrouping] = useState(false);
 
   // Check if yesterday has entries and today is empty
   const yesterdayEntries = getEntriesForDate(yesterdayDate);
@@ -121,6 +124,46 @@ export default function TodayDashboard() {
     } finally {
       setIsCopying(false);
     }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleGroupAsRecipe = async () => {
+    if (selectedIds.length < 2) {
+      toast.error('Select at least 2 items to group');
+      return;
+    }
+    
+    setIsGrouping(true);
+    const recipeName = prompt('Enter a name for this recipe:');
+    if (!recipeName) {
+      setIsGrouping(false);
+      return;
+    }
+
+    try {
+      const result = await groupAsRecipe(selectedIds, recipeName);
+      if (result) {
+        toast.success(`Created recipe "${recipeName}"`);
+        setSelectedIds([]);
+        setSelectionMode(false);
+      } else {
+        toast.error('Failed to create recipe');
+      }
+    } catch {
+      toast.error('Failed to create recipe');
+    } finally {
+      setIsGrouping(false);
+    }
+  };
+
+  const handleUngroupRecipe = async (id: string) => {
+    await ungroupRecipe(id);
+    toast.success('Recipe ungrouped');
   };
 
   const getDateLabel = () => {
@@ -277,10 +320,44 @@ export default function TodayDashboard() {
 
         {/* Meals section */}
         <section className="space-y-3">
-          <div className="section-label">MEALS</div>
+          <div className="flex items-center justify-between">
+            <div className="section-label">MEALS</div>
+            {/* Selection mode toggle */}
+            {!selectionMode ? (
+              <button
+                onClick={() => setSelectionMode(true)}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+              >
+                <Package className="w-3.5 h-3.5" />
+                Group as Recipe
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {selectedIds.length} selected
+                </span>
+                <button
+                  onClick={() => {
+                    setSelectionMode(false);
+                    setSelectedIds([]);
+                  }}
+                  className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <button
+                  onClick={handleGroupAsRecipe}
+                  disabled={selectedIds.length < 2 || isGrouping}
+                  className="p-1.5 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-colors disabled:opacity-50"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
           
           {/* Copy Yesterday button */}
-          {canCopyYesterday && (
+          {canCopyYesterday && !selectionMode && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -313,6 +390,11 @@ export default function TodayDashboard() {
                 onEditEntry={handleEditEntry}
                 onDeleteEntry={handleDeleteEntry}
                 onDuplicateEntry={handleDuplicateEntry}
+                getIngredients={getIngredients}
+                selectionMode={selectionMode}
+                selectedIds={selectedIds}
+                onToggleSelect={handleToggleSelect}
+                onUngroupRecipe={handleUngroupRecipe}
               />
             </motion.div>
           ))}

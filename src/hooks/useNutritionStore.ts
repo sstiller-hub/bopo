@@ -49,6 +49,8 @@ type DbEntry = {
   fat: number;
   note: string | null;
   created_at: string;
+  parent_entry_id: string | null;
+  is_recipe: boolean;
 };
 
 type DbSettings = {
@@ -121,6 +123,8 @@ function dbEntryToEntry(db: DbEntry): Entry {
     },
     note: db.note || undefined,
     createdAt: db.created_at,
+    parentEntryId: db.parent_entry_id || undefined,
+    isRecipe: db.is_recipe || false,
   };
 }
 
@@ -574,11 +578,17 @@ export function useEntries() {
   }, [entries, user, addEntry]);
 
   const getEntriesForDate = useCallback((date: string) => {
-    return entries.filter(e => e.date === date);
+    // Only return top-level entries for totals (not child ingredients)
+    return entries.filter(e => e.date === date && !e.parentEntryId);
   }, [entries]);
 
   const getEntriesByMeal = useCallback((date: string, meal: MealType) => {
-    return entries.filter(e => e.date === date && e.meal === meal);
+    // Only return top-level entries (not ingredients which have parentEntryId)
+    return entries.filter(e => e.date === date && e.meal === meal && !e.parentEntryId);
+  }, [entries]);
+
+  const getIngredients = useCallback((parentId: string) => {
+    return entries.filter(e => e.parentEntryId === parentId);
   }, [entries]);
 
   const getTotalsForDate = useCallback((date: string): Macros => {
@@ -614,6 +624,99 @@ export function useEntries() {
       .slice(0, days);
   }, [entries]);
 
+  // Group multiple entries into a recipe
+  const groupAsRecipe = useCallback(async (entryIds: string[], recipeName: string) => {
+    if (!user || entryIds.length < 2) return null;
+
+    const selectedEntries = entries.filter(e => entryIds.includes(e.id));
+    if (selectedEntries.length < 2) return null;
+
+    // Calculate combined macros
+    const combinedMacros = selectedEntries.reduce(
+      (acc, entry) => ({
+        calories: acc.calories + entry.computedMacros.calories,
+        protein: acc.protein + entry.computedMacros.protein,
+        carbs: acc.carbs + entry.computedMacros.carbs,
+        fat: acc.fat + entry.computedMacros.fat,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+
+    const combinedGrams = selectedEntries.reduce((acc, e) => acc + e.amountGrams, 0);
+    const firstEntry = selectedEntries[0];
+
+    // Create the parent recipe entry
+    const dbRecipe = {
+      user_id: user.id,
+      date: firstEntry.date,
+      meal: firstEntry.meal,
+      food_id: null,
+      food_name: recipeName,
+      amount_grams: combinedGrams,
+      calories: combinedMacros.calories,
+      protein: combinedMacros.protein,
+      carbs: combinedMacros.carbs,
+      fat: combinedMacros.fat,
+      note: null,
+      is_recipe: true,
+      parent_entry_id: null,
+    };
+
+    const { data: recipeData, error: recipeError } = await supabase
+      .from('entries')
+      .insert(dbRecipe)
+      .select()
+      .single();
+
+    if (!recipeData || recipeError) return null;
+
+    const newRecipe = dbEntryToEntry(recipeData as DbEntry);
+
+    // Update all selected entries to become children of the recipe
+    await supabase
+      .from('entries')
+      .update({ parent_entry_id: newRecipe.id })
+      .in('id', entryIds)
+      .eq('user_id', user.id);
+
+    // Update local state
+    setEntries(prev => {
+      const updated = prev.map(e => 
+        entryIds.includes(e.id) ? { ...e, parentEntryId: newRecipe.id } : e
+      );
+      return [newRecipe, ...updated];
+    });
+
+    return newRecipe;
+  }, [user, entries]);
+
+  // Ungroup a recipe back to individual entries
+  const ungroupRecipe = useCallback(async (recipeId: string) => {
+    if (!user) return;
+
+    // Remove parent_entry_id from all children
+    await supabase
+      .from('entries')
+      .update({ parent_entry_id: null })
+      .eq('parent_entry_id', recipeId)
+      .eq('user_id', user.id);
+
+    // Delete the recipe entry
+    await supabase
+      .from('entries')
+      .delete()
+      .eq('id', recipeId)
+      .eq('user_id', user.id);
+
+    // Update local state
+    setEntries(prev => {
+      const updated = prev.map(e => 
+        e.parentEntryId === recipeId ? { ...e, parentEntryId: undefined } : e
+      );
+      return updated.filter(e => e.id !== recipeId);
+    });
+  }, [user]);
+
   return {
     entries,
     loading,
@@ -624,9 +727,12 @@ export function useEntries() {
     copyEntriesFromDate,
     getEntriesForDate,
     getEntriesByMeal,
+    getIngredients,
     getTotalsForDate,
     getMealTotals,
     getHistoryDates,
+    groupAsRecipe,
+    ungroupRecipe,
   };
 }
 
