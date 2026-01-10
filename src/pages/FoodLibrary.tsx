@@ -26,9 +26,28 @@ export default function FoodLibrary() {
   
   const { foods, deleteFood: removeFoodFromLibrary, searchFoods } = useFoods();
   
+  // Smart sort: favorites → recent → frequent → alphabetical
   const displayedFoods = searchQuery.length >= 2 
     ? searchFoods(searchQuery)
-    : [...foods].sort((a, b) => a.name.localeCompare(b.name));
+    : [...foods].sort((a, b) => {
+        // Favorites first
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        
+        // Then by recent usage
+        if (a.lastUsedAt && b.lastUsedAt) {
+          const diff = new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime();
+          if (diff !== 0) return diff;
+        }
+        if (a.lastUsedAt && !b.lastUsedAt) return -1;
+        if (!a.lastUsedAt && b.lastUsedAt) return 1;
+        
+        // Then by use count
+        if (a.useCount !== b.useCount) return b.useCount - a.useCount;
+        
+        // Finally alphabetical
+        return a.name.localeCompare(b.name);
+      });
 
   const handleFoodClick = (food: Food) => {
     navigate(`/foods/edit/${food.id}`);

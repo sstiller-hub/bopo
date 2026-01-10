@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Plus, ChevronRight, Package, Check } from 'lucide-react';
+import { ChevronDown, Plus, ChevronRight, Package, Check, Bookmark } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Entry, Macros, MealType } from '@/types/nutrition';
 import { SwipeableEntry } from './SwipeableEntry';
 import { Checkbox } from '@/components/ui/checkbox';
+import { MealTemplate } from '@/hooks/useMealTemplates';
 
 interface MealSectionProps {
   title: string;
@@ -23,6 +24,9 @@ interface MealSectionProps {
   onUngroupRecipe?: (id: string) => void;
   isCompleted?: boolean;
   onToggleCompleted?: (meal: MealType) => void;
+  templates?: MealTemplate[];
+  onSaveAsTemplate?: (meal: MealType, entries: Entry[]) => void;
+  onApplyTemplate?: (template: MealTemplate) => void;
 }
 
 export function MealSection({
@@ -42,9 +46,13 @@ export function MealSection({
   onUngroupRecipe,
   isCompleted = false,
   onToggleCompleted,
+  templates = [],
+  onSaveAsTemplate,
+  onApplyTemplate,
 }: MealSectionProps) {
   const [isExpanded, setIsExpanded] = useState(!isCompleted);
   const [expandedRecipes, setExpandedRecipes] = useState<Set<string>>(new Set());
+  const [showTemplates, setShowTemplates] = useState(false);
 
   // Auto-collapse when completed, auto-expand when uncompleted
   useEffect(() => {
@@ -143,10 +151,32 @@ export function MealSection({
             className="overflow-hidden"
           >
             <div className="border-t border-white/10 dark:border-white/10">
+              {/* Templates quick access */}
+              {entries.length === 0 && templates.length > 0 && (
+                <div className="p-3 space-y-2">
+                  <div className="text-xs text-muted-foreground/60 uppercase tracking-wider px-1">Templates</div>
+                  {templates.slice(0, 3).map(template => (
+                    <button
+                      key={template.id}
+                      onClick={() => onApplyTemplate?.(template)}
+                      className="w-full p-2 flex items-center justify-between rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <span className="text-sm text-foreground/80">{template.name}</span>
+                      <span className="text-xs text-muted-foreground font-tabular">
+                        {template.entries.reduce((acc, e) => acc + e.macros.calories, 0)} cal
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
               {entries.length === 0 ? (
                 <button
                   onClick={() => onAddFood(meal)}
-                  className="w-full p-4 flex items-center justify-center hover:bg-white/5 dark:hover:bg-white/5 transition-colors rounded-b-3xl"
+                  className={cn(
+                    "w-full p-4 flex items-center justify-center hover:bg-white/5 dark:hover:bg-white/5 transition-colors",
+                    templates.length === 0 ? "rounded-b-3xl" : "border-t border-white/10"
+                  )}
                 >
                   <Plus className="w-5 h-5 text-primary" />
                 </button>
@@ -252,13 +282,29 @@ export function MealSection({
                     })}
                   </div>
 
-                  {/* Add food button */}
-                  <button
-                    onClick={() => onAddFood(meal)}
-                    className="w-full p-3 flex items-center justify-center hover:bg-white/5 dark:hover:bg-white/5 transition-colors border-t border-white/10 dark:border-white/10 rounded-b-3xl"
-                  >
-                    <Plus className="w-4 h-4 text-primary" />
-                  </button>
+                  {/* Action buttons */}
+                  <div className="flex items-center border-t border-white/10 dark:border-white/10">
+                    {/* Save as template */}
+                    {entries.length >= 1 && onSaveAsTemplate && (
+                      <button
+                        onClick={() => onSaveAsTemplate(meal, entries)}
+                        className="flex-1 p-3 flex items-center justify-center gap-1.5 hover:bg-white/5 transition-colors text-muted-foreground hover:text-primary"
+                      >
+                        <Bookmark className="w-3.5 h-3.5" />
+                        <span className="text-xs">Save Template</span>
+                      </button>
+                    )}
+                    {/* Add food button */}
+                    <button
+                      onClick={() => onAddFood(meal)}
+                      className={cn(
+                        "flex-1 p-3 flex items-center justify-center hover:bg-white/5 transition-colors rounded-br-3xl",
+                        entries.length >= 1 && onSaveAsTemplate && "border-l border-white/10"
+                      )}
+                    >
+                      <Plus className="w-4 h-4 text-primary" />
+                    </button>
+                  </div>
                 </>
               )}
             </div>

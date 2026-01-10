@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { QuickAddModal } from '@/components/QuickAddModal';
 import { Button } from '@/components/ui/button';
 import { useSettings, useEntries, useFoods } from '@/hooks/useNutritionStore';
+import { useMealTemplates, MealTemplate } from '@/hooks/useMealTemplates';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MealType, Entry, Macros } from '@/types/nutrition';
 import { toast } from 'sonner';
@@ -23,8 +24,12 @@ export default function TodayDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { settings, loading: settingsLoading } = useSettings();
-  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate, getIngredients, groupAsRecipe, ungroupRecipe, loading: entriesLoading } = useEntries();
+  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate, getIngredients, groupAsRecipe, ungroupRecipe, getWeeklyAverages, loading: entriesLoading } = useEntries();
   const { loading: foodsLoading } = useFoods();
+  const { templates, createTemplate, getTemplatesForMeal, incrementUsage } = useMealTemplates();
+  
+  // Get weekly averages
+  const weeklyAverages = getWeeklyAverages();
   
   const isLoading = settingsLoading || entriesLoading || foodsLoading;
   
@@ -179,6 +184,33 @@ export default function TodayDashboard() {
     });
   };
 
+  const handleSaveAsTemplate = async (meal: MealType, entries: Entry[]) => {
+    const name = prompt('Name this template:');
+    if (!name) return;
+    
+    const template = await createTemplate(name, meal, entries);
+    if (template) {
+      toast.success(`Template "${name}" saved`);
+    } else {
+      toast.error('Failed to save template');
+    }
+  };
+
+  const handleApplyTemplate = async (template: MealTemplate) => {
+    for (const entry of template.entries) {
+      await addEntry({
+        date: selectedDate,
+        meal: template.mealType,
+        foodId: entry.foodId,
+        foodName: entry.foodName,
+        amountGrams: entry.amountGrams,
+        computedMacros: entry.macros,
+      });
+    }
+    await incrementUsage(template.id);
+    toast.success(`Added ${template.entries.length} items from "${template.name}"`);
+  };
+
   const getDateLabel = () => {
     if (isSelectedToday) return 'Today';
     if (format(subDays(new Date(), 1), 'yyyy-MM-dd') === selectedDate) return 'Yesterday';
@@ -226,6 +258,15 @@ export default function TodayDashboard() {
                 style={{ fontSize: '13px', fontWeight: 500 }}
               >
                 {format(selectedDateObj, 'MMM d, yyyy')}
+              </p>
+            )}
+            {/* Weekly averages - subtle context */}
+            {isSelectedToday && weeklyAverages.calories > 0 && (
+              <p 
+                className="text-muted-foreground/70 dark:text-white/30 font-tabular"
+                style={{ fontSize: '11px' }}
+              >
+                7-day avg: {weeklyAverages.calories} cal · {weeklyAverages.protein}P
               </p>
             )}
           </div>
@@ -410,6 +451,9 @@ export default function TodayDashboard() {
                 onUngroupRecipe={handleUngroupRecipe}
                 isCompleted={completedMeals.has(key)}
                 onToggleCompleted={handleToggleMealCompleted}
+                templates={getTemplatesForMeal(key)}
+                onSaveAsTemplate={handleSaveAsTemplate}
+                onApplyTemplate={handleApplyTemplate}
               />
             </motion.div>
           ))}
