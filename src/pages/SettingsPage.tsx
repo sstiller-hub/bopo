@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Save, RefreshCw, LogOut, ChevronRight, Sun, Moon, Monitor } from 'lucide-react';
+import { Save, RefreshCw, LogOut, ChevronRight, Sun, Moon, Monitor, Bookmark } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { UnitToggle } from '@/components/UnitToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSettings } from '@/hooks/useNutritionStore';
+import { useMealTemplates } from '@/hooks/useMealTemplates';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { Macros, defaultSettings } from '@/types/nutrition';
@@ -18,6 +19,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { settings, updateSettings } = useSettings();
+  const { templates } = useMealTemplates();
   const { theme, setTheme } = useTheme();
   
   const [targets, setTargets] = useState<Macros>(settings.dailyTargets);
@@ -142,7 +144,31 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
-        {/* Daily Targets Card */}
+        {/* Meal Templates Link */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.07 }}
+        >
+          <button
+            onClick={() => navigate('/settings/templates')}
+            className="w-full bg-card rounded-2xl p-4 shadow-sm flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Bookmark className="w-5 h-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <div className="font-semibold text-foreground">Meal Templates</div>
+                <div className="text-sm text-muted-foreground">
+                  {templates.length} saved template{templates.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

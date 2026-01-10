@@ -10,6 +10,7 @@ import ConfirmEntry from "./pages/ConfirmEntry";
 import FoodLibrary from "./pages/FoodLibrary";
 import FoodEditor from "./pages/FoodEditor";
 import SettingsPage from "./pages/SettingsPage";
+import MealTemplatesPage from "./pages/MealTemplatesPage";
 import HistoryPage from "./pages/HistoryPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -55,6 +56,7 @@ function AppRoutes() {
       <Route path="/foods/new" element={<ProtectedRoute><FoodEditor /></ProtectedRoute>} />
       <Route path="/foods/edit/:id" element={<ProtectedRoute><FoodEditor /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/settings/templates" element={<ProtectedRoute><MealTemplatesPage /></ProtectedRoute>} />
       <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
