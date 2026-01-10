@@ -408,10 +408,28 @@ export function useFoods() {
 
   const searchFoods = useCallback((query: string) => {
     const lower = query.toLowerCase();
-    return foods.filter(f => 
+    const matches = foods.filter(f => 
       f.name.toLowerCase().includes(lower) || 
       f.brand?.toLowerCase().includes(lower)
     );
+    
+    // Sort: favorites first, then by recent usage, then by frequency
+    return matches.sort((a, b) => {
+      // Favorites first
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+      
+      // Then by recent usage
+      if (a.lastUsedAt && b.lastUsedAt) {
+        const diff = new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime();
+        if (diff !== 0) return diff;
+      }
+      if (a.lastUsedAt && !b.lastUsedAt) return -1;
+      if (!a.lastUsedAt && b.lastUsedAt) return 1;
+      
+      // Then by use count
+      return b.useCount - a.useCount;
+    });
   }, [foods]);
 
   return {
@@ -624,6 +642,37 @@ export function useEntries() {
       .slice(0, days);
   }, [entries]);
 
+  // Get weekly averages for the last 7 days
+  const getWeeklyAverages = useCallback((): Macros => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    // Get unique dates with entries in the last 7 days
+    const daysWithEntries = new Set<string>();
+    const totals: Macros = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    
+    entries.forEach(e => {
+      if (e.parentEntryId) return; // Skip ingredients
+      const entryDate = new Date(e.date);
+      if (entryDate >= sevenDaysAgo && entryDate <= now) {
+        daysWithEntries.add(e.date);
+        totals.calories += e.computedMacros.calories;
+        totals.protein += e.computedMacros.protein;
+        totals.carbs += e.computedMacros.carbs;
+        totals.fat += e.computedMacros.fat;
+      }
+    });
+    
+    const dayCount = Math.max(daysWithEntries.size, 1);
+    return {
+      calories: Math.round(totals.calories / dayCount),
+      protein: Math.round(totals.protein / dayCount),
+      carbs: Math.round(totals.carbs / dayCount),
+      fat: Math.round(totals.fat / dayCount),
+    };
+  }, [entries]);
+
   // Group multiple entries into a recipe
   const groupAsRecipe = useCallback(async (entryIds: string[], recipeName: string) => {
     if (!user || entryIds.length < 2) return null;
@@ -731,6 +780,7 @@ export function useEntries() {
     getTotalsForDate,
     getMealTotals,
     getHistoryDates,
+    getWeeklyAverages,
     groupAsRecipe,
     ungroupRecipe,
   };

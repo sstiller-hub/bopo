@@ -155,6 +155,42 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_templates: {
+        Row: {
+          created_at: string
+          entries: Json
+          id: string
+          last_used_at: string | null
+          meal_type: Database["public"]["Enums"]["meal_type"]
+          name: string
+          updated_at: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entries?: Json
+          id?: string
+          last_used_at?: string | null
+          meal_type: Database["public"]["Enums"]["meal_type"]
+          name: string
+          updated_at?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entries?: Json
+          id?: string
+          last_used_at?: string | null
+          meal_type?: Database["public"]["Enums"]["meal_type"]
+          name?: string
+          updated_at?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string
