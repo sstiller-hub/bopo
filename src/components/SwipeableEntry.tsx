@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
-import { Trash2, Copy, Edit2 } from 'lucide-react';
+import { Trash2, Copy, Edit2, Unlink } from 'lucide-react';
 import { Entry, gramsToOunces } from '@/types/nutrition';
 
 interface SwipeableEntryProps {
@@ -9,6 +9,8 @@ interface SwipeableEntryProps {
   onEdit: (entry: Entry) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
+  isRecipe?: boolean;
+  onUngroup?: () => void;
 }
 
 export function SwipeableEntry({
@@ -17,12 +19,14 @@ export function SwipeableEntry({
   onEdit,
   onDelete,
   onDuplicate,
+  isRecipe = false,
+  onUngroup,
 }: SwipeableEntryProps) {
   const constraintsRef = useRef(null);
   const x = useMotionValue(0);
   const [isRevealed, setIsRevealed] = useState(false);
 
-  const actionsWidth = 120; // Width of the actions panel
+  const actionsWidth = isRecipe && onUngroup ? 160 : 120; // Extra width for ungroup button
 
   const formatAmount = (grams: number) => {
     if (preferredUnit === 'oz') {
@@ -50,6 +54,19 @@ export function SwipeableEntry({
     <div className="relative overflow-hidden" ref={constraintsRef}>
       {/* Actions behind */}
       <div className="absolute right-0 top-0 bottom-0 flex items-stretch">
+        {/* Ungroup button for recipes */}
+        {isRecipe && onUngroup && (
+          <button
+            onClick={() => {
+              onUngroup();
+              setIsRevealed(false);
+            }}
+            className="w-10 bg-amber-600 flex items-center justify-center text-white"
+            title="Ungroup recipe"
+          >
+            <Unlink className="w-4 h-4" />
+          </button>
+        )}
         <button
           onClick={() => {
             onEdit(entry);

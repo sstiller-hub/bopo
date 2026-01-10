@@ -32,6 +32,8 @@ export interface Entry {
   computedMacros: Macros;
   note?: string;
   createdAt: string;
+  parentEntryId?: string; // If set, this entry is an ingredient of the parent recipe
+  isRecipe?: boolean; // If true, this entry is a recipe with child ingredients
 }
 
 export interface DayLog {

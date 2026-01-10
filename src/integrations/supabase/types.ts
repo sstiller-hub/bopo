@@ -25,8 +25,10 @@ export type Database = {
           food_id: string | null
           food_name: string
           id: string
+          is_recipe: boolean
           meal: Database["public"]["Enums"]["meal_type"]
           note: string | null
+          parent_entry_id: string | null
           protein: number
           user_id: string
         }
@@ -40,8 +42,10 @@ export type Database = {
           food_id?: string | null
           food_name: string
           id?: string
+          is_recipe?: boolean
           meal: Database["public"]["Enums"]["meal_type"]
           note?: string | null
+          parent_entry_id?: string | null
           protein: number
           user_id: string
         }
@@ -55,8 +59,10 @@ export type Database = {
           food_id?: string | null
           food_name?: string
           id?: string
+          is_recipe?: boolean
           meal?: Database["public"]["Enums"]["meal_type"]
           note?: string | null
+          parent_entry_id?: string | null
           protein?: number
           user_id?: string
         }
@@ -66,6 +72,13 @@ export type Database = {
             columns: ["food_id"]
             isOneToOne: false
             referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_parent_entry_id_fkey"
+            columns: ["parent_entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
             referencedColumns: ["id"]
           },
         ]
