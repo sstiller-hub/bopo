@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Plus, ChevronRight, Package } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronDown, Plus, ChevronRight, Package, Check, RotateCcw } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Entry, Macros, MealType } from '@/types/nutrition';
 import { SwipeableEntry } from './SwipeableEntry';
@@ -21,6 +21,8 @@ interface MealSectionProps {
   selectedIds?: string[];
   onToggleSelect?: (id: string) => void;
   onUngroupRecipe?: (id: string) => void;
+  isCompleted?: boolean;
+  onToggleCompleted?: (meal: MealType) => void;
 }
 
 export function MealSection({
@@ -38,9 +40,18 @@ export function MealSection({
   selectedIds = [],
   onToggleSelect,
   onUngroupRecipe,
+  isCompleted = false,
+  onToggleCompleted,
 }: MealSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(!isCompleted);
   const [expandedRecipes, setExpandedRecipes] = useState<Set<string>>(new Set());
+
+  // Auto-collapse when completed
+  useEffect(() => {
+    if (isCompleted) {
+      setIsExpanded(false);
+    }
+  }, [isCompleted]);
 
   const toggleRecipeExpanded = (recipeId: string) => {
     setExpandedRecipes(prev => {
@@ -54,36 +65,79 @@ export function MealSection({
     });
   };
 
+  const handleToggleCompleted = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleCompleted?.(meal);
+  };
+
   return (
-    <div className="glass-card">
+    <div className={cn("glass-card", isCompleted && "opacity-80")}>
       {/* Header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 hover:bg-white/5 dark:hover:bg-white/5 transition-colors rounded-t-3xl"
+      <div
+        className={cn(
+          "w-full flex items-center justify-between p-4 transition-colors rounded-t-3xl",
+          !isCompleted && "hover:bg-white/5 dark:hover:bg-white/5"
+        )}
       >
-        <div className="flex items-center gap-3">
-          <span className="font-semibold text-foreground dark:text-white/95">{title}</span>
-          <span className="text-sm text-muted-foreground dark:text-white/45 font-tabular">
-            {entries.length} {entries.length === 1 ? 'item' : 'items'}
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          {/* Mini macro summary */}
-          <div className="flex items-center gap-3 text-xs font-tabular">
-            <span className="text-calories font-semibold">{Math.round(totals.calories)}</span>
-            <span className="text-muted-foreground/50 dark:text-white/20">•</span>
-            <span className="text-protein">{Math.round(totals.protein)}P</span>
-            <span className="text-carbs">{Math.round(totals.carbs)}C</span>
-            <span className="text-fat">{Math.round(totals.fat)}F</span>
-          </div>
-          <ChevronDown 
+        {/* Complete/Undo button */}
+        {entries.length > 0 && onToggleCompleted && (
+          <button
+            onClick={handleToggleCompleted}
             className={cn(
-              'w-5 h-5 text-muted-foreground dark:text-white/50 transition-transform',
-              isExpanded && 'rotate-180'
-            )} 
-          />
-        </div>
-      </button>
+              "w-7 h-7 rounded-full flex items-center justify-center mr-3 transition-all",
+              isCompleted 
+                ? "bg-green-500/20 text-green-400 hover:bg-green-500/30" 
+                : "bg-white/5 text-muted-foreground hover:bg-white/10"
+            )}
+            title={isCompleted ? "Undo completion" : "Mark as done"}
+          >
+            {isCompleted ? <RotateCcw className="w-3.5 h-3.5" /> : <Check className="w-4 h-4" />}
+          </button>
+        )}
+        
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex-1 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className={cn(
+              "font-semibold",
+              isCompleted 
+                ? "text-muted-foreground line-through" 
+                : "text-foreground dark:text-white/95"
+            )}>
+              {title}
+            </span>
+            <span className="text-sm text-muted-foreground dark:text-white/45 font-tabular">
+              {entries.length} {entries.length === 1 ? 'item' : 'items'}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            {/* Mini macro summary */}
+            <div className="flex items-center gap-3 text-xs font-tabular">
+              <span className={cn("font-semibold", isCompleted ? "text-muted-foreground" : "text-calories")}>
+                {Math.round(totals.calories)}
+              </span>
+              <span className="text-muted-foreground/50 dark:text-white/20">•</span>
+              <span className={isCompleted ? "text-muted-foreground" : "text-protein"}>
+                {Math.round(totals.protein)}P
+              </span>
+              <span className={isCompleted ? "text-muted-foreground" : "text-carbs"}>
+                {Math.round(totals.carbs)}C
+              </span>
+              <span className={isCompleted ? "text-muted-foreground" : "text-fat"}>
+                {Math.round(totals.fat)}F
+              </span>
+            </div>
+            <ChevronDown 
+              className={cn(
+                'w-5 h-5 text-muted-foreground dark:text-white/50 transition-transform',
+                isExpanded && 'rotate-180'
+              )} 
+            />
+          </div>
+        </button>
+      </div>
 
       {/* Entries */}
       <AnimatePresence>
