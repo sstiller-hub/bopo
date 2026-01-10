@@ -297,10 +297,9 @@ export default function TodayDashboard() {
         >
           <button
             onClick={() => navigate('/log')}
-            className="h-14 w-14 rounded-full flex items-center justify-center transition-all active:scale-95"
+            className="h-14 w-14 rounded-full flex items-center justify-center transition-all active:scale-95 bg-gradient-primary"
             style={{
-              background: 'linear-gradient(135deg, hsl(12, 65%, 55%) 0%, hsl(8, 55%, 45%) 100%)',
-              boxShadow: '0 8px 24px rgba(255, 87, 51, 0.35), 0 0 20px rgba(255, 87, 51, 0.15)',
+              boxShadow: '0 8px 24px rgba(59, 130, 246, 0.35), 0 0 20px rgba(59, 130, 246, 0.15)',
             }}
           >
             <Plus className="w-6 h-6 text-white" />
