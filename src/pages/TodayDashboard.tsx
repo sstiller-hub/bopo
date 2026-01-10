@@ -132,6 +132,30 @@ export default function TodayDashboard() {
     }
   };
 
+  const handleCopyMealFromYesterday = async (meal: MealType) => {
+    const yesterdayMealEntries = getEntriesByMeal(yesterdayDate, meal);
+    if (yesterdayMealEntries.length === 0) {
+      toast.error('No entries to copy');
+      return;
+    }
+
+    let copiedCount = 0;
+    for (const entry of yesterdayMealEntries) {
+      await addEntry({
+        date: selectedDate,
+        meal: entry.meal,
+        foodId: entry.foodId,
+        foodName: entry.foodName,
+        amountGrams: entry.amountGrams,
+        computedMacros: entry.computedMacros,
+        note: entry.note,
+      });
+      copiedCount++;
+    }
+    
+    toast.success(`Copied ${copiedCount} ${meal} item${copiedCount !== 1 ? 's' : ''} from yesterday`);
+  };
+
   const handleToggleSelect = (id: string) => {
     setSelectedIds(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -454,6 +478,8 @@ export default function TodayDashboard() {
                 templates={getTemplatesForMeal(key)}
                 onSaveAsTemplate={handleSaveAsTemplate}
                 onApplyTemplate={handleApplyTemplate}
+                yesterdayMealEntries={getEntriesByMeal(yesterdayDate, key)}
+                onCopyFromYesterday={handleCopyMealFromYesterday}
               />
             </motion.div>
           ))}

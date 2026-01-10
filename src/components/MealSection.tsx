@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Plus, ChevronRight, Package, Check, Bookmark } from 'lucide-react';
+import { ChevronDown, Plus, ChevronRight, Package, Check, Bookmark, Copy } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Entry, Macros, MealType } from '@/types/nutrition';
@@ -27,6 +27,8 @@ interface MealSectionProps {
   templates?: MealTemplate[];
   onSaveAsTemplate?: (meal: MealType, entries: Entry[]) => void;
   onApplyTemplate?: (template: MealTemplate) => void;
+  yesterdayMealEntries?: Entry[];
+  onCopyFromYesterday?: (meal: MealType) => void;
 }
 
 export function MealSection({
@@ -49,6 +51,8 @@ export function MealSection({
   templates = [],
   onSaveAsTemplate,
   onApplyTemplate,
+  yesterdayMealEntries = [],
+  onCopyFromYesterday,
 }: MealSectionProps) {
   const [isExpanded, setIsExpanded] = useState(!isCompleted);
   const [expandedRecipes, setExpandedRecipes] = useState<Set<string>>(new Set());
@@ -151,22 +155,45 @@ export function MealSection({
             className="overflow-hidden"
           >
             <div className="border-t border-white/10 dark:border-white/10">
-              {/* Templates quick access */}
-              {entries.length === 0 && templates.length > 0 && (
+              {/* Quick actions when empty */}
+              {entries.length === 0 && (templates.length > 0 || yesterdayMealEntries.length > 0) && (
                 <div className="p-3 space-y-2">
-                  <div className="text-xs text-muted-foreground/60 uppercase tracking-wider px-1">Templates</div>
-                  {templates.slice(0, 3).map(template => (
-                    <button
-                      key={template.id}
-                      onClick={() => onApplyTemplate?.(template)}
-                      className="w-full p-2 flex items-center justify-between rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <span className="text-sm text-foreground/80">{template.name}</span>
-                      <span className="text-xs text-muted-foreground font-tabular">
-                        {template.entries.reduce((acc, e) => acc + e.macros.calories, 0)} cal
-                      </span>
-                    </button>
-                  ))}
+                  {/* Copy from yesterday */}
+                  {yesterdayMealEntries.length > 0 && (
+                    <>
+                      <button
+                        onClick={() => onCopyFromYesterday?.(meal)}
+                        className="w-full p-2 flex items-center justify-between rounded-xl bg-primary/10 hover:bg-primary/20 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Copy className="w-4 h-4 text-primary" />
+                          <span className="text-sm text-foreground/80">Copy yesterday's {title.toLowerCase()}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground font-tabular">
+                          {yesterdayMealEntries.length} item{yesterdayMealEntries.length !== 1 ? 's' : ''}
+                        </span>
+                      </button>
+                    </>
+                  )}
+                  
+                  {/* Templates */}
+                  {templates.length > 0 && (
+                    <>
+                      <div className="text-xs text-muted-foreground/60 uppercase tracking-wider px-1 pt-1">Templates</div>
+                      {templates.slice(0, 3).map(template => (
+                        <button
+                          key={template.id}
+                          onClick={() => onApplyTemplate?.(template)}
+                          className="w-full p-2 flex items-center justify-between rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                        >
+                          <span className="text-sm text-foreground/80">{template.name}</span>
+                          <span className="text-xs text-muted-foreground font-tabular">
+                            {template.entries.reduce((acc, e) => acc + e.macros.calories, 0)} cal
+                          </span>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
               
@@ -175,7 +202,7 @@ export function MealSection({
                   onClick={() => onAddFood(meal)}
                   className={cn(
                     "w-full p-4 flex items-center justify-center hover:bg-white/5 dark:hover:bg-white/5 transition-colors",
-                    templates.length === 0 ? "rounded-b-3xl" : "border-t border-white/10"
+                    (templates.length === 0 && yesterdayMealEntries.length === 0) ? "rounded-b-3xl" : "border-t border-white/10"
                   )}
                 >
                   <Plus className="w-5 h-5 text-primary" />
