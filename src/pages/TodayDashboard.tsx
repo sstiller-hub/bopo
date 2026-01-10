@@ -528,20 +528,6 @@ function MacroProgressBar({
               : `0 0 12px ${glowColor}`
           }}
         />
-        
-        {/* Shimmer effect */}
-        <div 
-          className="absolute inset-0 rounded-full overflow-hidden"
-          style={{ width: `${percentage}%` }}
-        >
-          <div 
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)',
-              animation: 'shimmer 2s infinite',
-            }}
-          />
-        </div>
       </div>
     </div>
   );
