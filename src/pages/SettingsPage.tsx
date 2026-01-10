@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Save, RefreshCw, LogOut, ChevronRight, Sun, Moon, Monitor, Bookmark } from 'lucide-react';
+import { Save, RefreshCw, LogOut, ChevronRight, Sun, Moon, Monitor, Bookmark, Zap, ExternalLink } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { UnitToggle } from '@/components/UnitToggle';
 import { Button } from '@/components/ui/button';
@@ -358,6 +358,16 @@ export default function SettingsPage() {
           )}
         </motion.div>
 
+        {/* Zapier Integration Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="bg-card rounded-2xl shadow-sm overflow-hidden"
+        >
+          <ZapierSection />
+        </motion.div>
+
         {/* Account Card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -427,5 +437,132 @@ function TargetInput({
         )}
       />
     </div>
+  );
+}
+
+function ZapierSection() {
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Load saved webhook URL from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('zapier_webhook_url');
+    if (saved) {
+      setWebhookUrl(saved);
+      setIsExpanded(true);
+    }
+  }, []);
+
+  const handleSaveWebhook = () => {
+    if (webhookUrl.trim()) {
+      localStorage.setItem('zapier_webhook_url', webhookUrl.trim());
+      toast.success('Zapier webhook saved!');
+    }
+  };
+
+  const handleTestWebhook = async () => {
+    if (!webhookUrl) {
+      toast.error('Please enter your Zapier webhook URL');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'no-cors',
+        body: JSON.stringify({
+          event: 'test',
+          timestamp: new Date().toISOString(),
+          source: 'macro-tracker',
+        }),
+      });
+
+      toast.success('Test sent! Check your Zap history to confirm.');
+    } catch (error) {
+      console.error('Webhook error:', error);
+      toast.error('Failed to trigger webhook');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center justify-between w-full p-4"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
+            <Zap className="w-5 h-5 text-orange-500" />
+          </div>
+          <div className="text-left">
+            <div className="font-semibold text-foreground">Zapier Integration</div>
+            <div className="text-sm text-muted-foreground">
+              Connect to smart home & more
+            </div>
+          </div>
+        </div>
+        <ChevronRight className={cn(
+          "w-5 h-5 text-muted-foreground transition-transform",
+          isExpanded && "rotate-90"
+        )} />
+      </button>
+
+      {isExpanded && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="px-4 pb-4 space-y-3"
+        >
+          <p className="text-sm text-muted-foreground">
+            Create a Zap with a webhook trigger, then paste the URL here to connect your macros to Wyze, notifications, and more.
+          </p>
+          
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Webhook URL</Label>
+            <Input
+              type="url"
+              placeholder="https://hooks.zapier.com/hooks/catch/..."
+              value={webhookUrl}
+              onChange={(e) => setWebhookUrl(e.target.value)}
+              className="text-sm"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSaveWebhook}
+              disabled={!webhookUrl.trim()}
+              className="flex-1"
+              size="sm"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </Button>
+            <Button
+              onClick={handleTestWebhook}
+              disabled={!webhookUrl.trim() || isLoading}
+              variant="outline"
+              size="sm"
+            >
+              {isLoading ? 'Sending...' : 'Test'}
+            </Button>
+          </div>
+
+          <a
+            href="https://zapier.com/app/zaps"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            Open Zapier <ExternalLink className="w-3 h-3" />
+          </a>
+        </motion.div>
+      )}
+    </>
   );
 }
