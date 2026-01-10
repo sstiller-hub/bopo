@@ -7,7 +7,8 @@ import { MealSection } from '@/components/MealSection';
 import { BottomNav } from '@/components/BottomNav';
 import { QuickAddModal } from '@/components/QuickAddModal';
 import { Button } from '@/components/ui/button';
-import { useSettings, useEntries } from '@/hooks/useNutritionStore';
+import { useSettings, useEntries, useFoods } from '@/hooks/useNutritionStore';
+import { Skeleton } from '@/components/ui/skeleton';
 import { MealType, Entry, Macros } from '@/types/nutrition';
 import { toast } from 'sonner';
 
@@ -21,8 +22,11 @@ const meals: { key: MealType; defaultName: string }[] = [
 export default function TodayDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { settings } = useSettings();
-  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate } = useEntries();
+  const { settings, loading: settingsLoading } = useSettings();
+  const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate, loading: entriesLoading } = useEntries();
+  const { loading: foodsLoading } = useFoods();
+  
+  const isLoading = settingsLoading || entriesLoading || foodsLoading;
   
   // Get selected date from URL or default to today
   const dateParam = searchParams.get('date');
@@ -209,6 +213,22 @@ export default function TodayDashboard() {
       <div className="relative z-10 px-6 pt-4 space-y-6">
         {/* Hero macro summary card */}
         <section>
+        {isLoading ? (
+          <div className="glass-hero p-5 space-y-4">
+            <Skeleton className="h-3 w-28 bg-white/10" />
+            <div className="space-y-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-24 bg-white/10" />
+                    <Skeleton className="h-3 w-16 bg-white/10" />
+                  </div>
+                  <Skeleton className="h-2 w-full bg-white/10" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
           <div className="glass-hero p-5">
             <div 
               className="section-label mb-4"
@@ -252,6 +272,7 @@ export default function TodayDashboard() {
               />
             </div>
           </div>
+        )}
         </section>
 
         {/* Meals section */}
