@@ -218,10 +218,34 @@ export default function TodayDashboard() {
             </div>
             
             <div className="grid grid-cols-4 gap-1.5">
-              <MacroItem label="Cal" value={remaining.calories} isOver={remaining.calories < 0} />
-              <MacroItem label="Pro" value={remaining.protein} isOver={remaining.protein < 0} />
-              <MacroItem label="Carb" value={remaining.carbs} isOver={remaining.carbs < 0} />
-              <MacroItem label="Fat" value={remaining.fat} isOver={remaining.fat < 0} />
+              <MacroItem 
+                label="Cal" 
+                value={remaining.calories} 
+                target={targets.calories}
+                consumed={consumed.calories}
+                color="hsl(210, 80%, 55%)"
+              />
+              <MacroItem 
+                label="Pro" 
+                value={remaining.protein} 
+                target={targets.protein}
+                consumed={consumed.protein}
+                color="hsl(280, 65%, 58%)"
+              />
+              <MacroItem 
+                label="Carb" 
+                value={remaining.carbs} 
+                target={targets.carbs}
+                consumed={consumed.carbs}
+                color="hsl(45, 85%, 55%)"
+              />
+              <MacroItem 
+                label="Fat" 
+                value={remaining.fat} 
+                target={targets.fat}
+                consumed={consumed.fat}
+                color="hsl(340, 70%, 58%)"
+              />
             </div>
           </div>
         </section>
@@ -319,11 +343,26 @@ export default function TodayDashboard() {
   );
 }
 
-function MacroItem({ label, value, isOver }: { label: string; value: number; isOver: boolean }) {
+function MacroItem({ 
+  label, 
+  value, 
+  target, 
+  consumed, 
+  color 
+}: { 
+  label: string; 
+  value: number; 
+  target: number;
+  consumed: number;
+  color: string;
+}) {
+  const isOver = value < 0;
+  const percentage = Math.min((consumed / target) * 100, 100);
+  
   return (
     <div className="text-center min-w-0">
       <div 
-        className="rounded-2xl py-3 px-1"
+        className="rounded-2xl py-3 px-1 relative overflow-hidden"
         style={{ background: 'rgba(0, 0, 0, 0.2)' }}
       >
         <div 
@@ -345,6 +384,23 @@ function MacroItem({ label, value, isOver }: { label: string; value: number; isO
           }}
         >
           {label}
+        </div>
+        
+        {/* Progress bar */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-1"
+          style={{ background: 'rgba(255, 255, 255, 0.08)' }}
+        >
+          <div 
+            className="h-full transition-all duration-500 ease-out"
+            style={{ 
+              width: `${percentage}%`,
+              background: isOver 
+                ? 'rgba(239, 68, 68, 0.8)' 
+                : `linear-gradient(90deg, ${color} 0%, ${color}cc 100%)`,
+              boxShadow: isOver ? 'none' : `0 0 8px ${color}66`
+            }}
+          />
         </div>
       </div>
     </div>
