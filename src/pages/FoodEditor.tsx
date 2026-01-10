@@ -25,6 +25,12 @@ export default function FoodEditor() {
   const [searchParams] = useSearchParams();
   const { id: editId } = useParams();
   const prefillBarcode = searchParams.get('barcode');
+  const prefillName = searchParams.get('name');
+  const prefillBrand = searchParams.get('brand');
+  const prefillCalories = searchParams.get('calories');
+  const prefillProtein = searchParams.get('protein');
+  const prefillCarbs = searchParams.get('carbs');
+  const prefillFat = searchParams.get('fat');
   const meal = searchParams.get('meal');
   
   const { foods, addFood, updateFood, deleteFood } = useFoods();
@@ -41,6 +47,9 @@ export default function FoodEditor() {
   const [fat, setFat] = useState('');
   const [showDelete, setShowDelete] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Check if we have prefill data from URL params
+  const hasPrefillData = prefillName || prefillCalories || prefillProtein || prefillCarbs || prefillFat;
 
   // Initialize from existing food or prefill
   useEffect(() => {
@@ -64,10 +73,19 @@ export default function FoodEditor() {
       if (existingFood.servingGrams) {
         setServingGrams(existingFood.servingGrams.toString());
       }
+    } else if (hasPrefillData) {
+      // Pre-fill from URL params (from scanned/searched product)
+      if (prefillName) setName(prefillName);
+      if (prefillBrand) setBrand(prefillBrand);
+      if (prefillBarcode) setBarcode(prefillBarcode);
+      if (prefillCalories) setCalories(prefillCalories);
+      if (prefillProtein) setProtein(prefillProtein);
+      if (prefillCarbs) setCarbs(prefillCarbs);
+      if (prefillFat) setFat(prefillFat);
     } else if (prefillBarcode) {
       setBarcode(prefillBarcode);
     }
-  }, [existingFood, prefillBarcode]);
+  }, [existingFood, hasPrefillData, prefillBarcode, prefillName, prefillBrand, prefillCalories, prefillProtein, prefillCarbs, prefillFat]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
