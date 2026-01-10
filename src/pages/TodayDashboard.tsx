@@ -260,13 +260,13 @@ export default function TodayDashboard() {
                 {format(selectedDateObj, 'MMM d, yyyy')}
               </p>
             )}
-            {/* Weekly averages - subtle context */}
-            {isSelectedToday && weeklyAverages.calories > 0 && (
+            {/* Weekly averages - only show when we have 2+ days of data */}
+            {isSelectedToday && weeklyAverages.daysWithData >= 2 && (
               <p 
                 className="text-muted-foreground/70 dark:text-white/30 font-tabular"
                 style={{ fontSize: '11px' }}
               >
-                7-day avg: {weeklyAverages.calories} cal · {weeklyAverages.protein}P
+                {weeklyAverages.daysWithData}-day avg: {weeklyAverages.calories} cal · {weeklyAverages.protein}P
               </p>
             )}
           </div>
