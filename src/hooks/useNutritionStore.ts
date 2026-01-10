@@ -441,7 +441,7 @@ export function useEntries() {
     async function fetchEntries() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
+      const dateStr = `${thirtyDaysAgo.getFullYear()}-${String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(thirtyDaysAgo.getDate()).padStart(2, '0')}`;
 
       const { data } = await supabase
         .from('entries')
@@ -634,7 +634,8 @@ export function useTodayStats() {
   const { settings } = useSettings();
   const { getTotalsForDate } = useEntries();
   
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const consumed = getTotalsForDate(today);
   const targets = settings.dailyTargets;
   
