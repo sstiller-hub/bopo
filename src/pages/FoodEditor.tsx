@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UnitToggle } from '@/components/UnitToggle';
-import { useFoods, useSettings } from '@/hooks/useNutritionStore';
-import { Macros, gramsToOunces, ouncesToGrams } from '@/types/nutrition';
+import { useFoods } from '@/hooks/useNutritionStore';
+import { Macros, ouncesToGrams } from '@/types/nutrition';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -20,6 +19,35 @@ import {
 } from '@/components/ui/alert-dialog';
 
 type NutritionBasis = 'per_100g' | 'per_serving';
+
+// Parse serving size input like "85", "85g", "3oz", "3 oz", "200 grams"
+function parseServingSize(input: string): { grams: number | null; display: string } {
+  if (!input.trim()) return { grams: null, display: '' };
+  
+  const trimmed = input.trim().toLowerCase();
+  
+  // Match patterns: "3oz", "3 oz", "3 ounces", "3 ounce"
+  const ozMatch = trimmed.match(/^([\d.]+)\s*(oz|ounces?)?$/);
+  if (ozMatch && (trimmed.includes('oz') || trimmed.includes('ounce'))) {
+    const value = parseFloat(ozMatch[1]);
+    if (!isNaN(value)) {
+      const grams = Math.round(ouncesToGrams(value));
+      return { grams, display: `${value} oz = ${grams}g` };
+    }
+  }
+  
+  // Match patterns: "85g", "85 g", "85 grams", "85 gram"
+  const gMatch = trimmed.match(/^([\d.]+)\s*(g|grams?)?$/);
+  if (gMatch) {
+    const value = parseFloat(gMatch[1]);
+    if (!isNaN(value)) {
+      return { grams: Math.round(value), display: `${Math.round(value)}g` };
+    }
+  }
+  
+  // No valid pattern found
+  return { grams: null, display: '' };
+}
 
 export default function FoodEditor() {
   const navigate = useNavigate();
@@ -35,15 +63,13 @@ export default function FoodEditor() {
   const meal = searchParams.get('meal');
   
   const { foods, addFood, updateFood, deleteFood } = useFoods();
-  const { settings } = useSettings();
   const existingFood = editId ? foods.find(f => f.id === editId) : null;
   
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const [barcode, setBarcode] = useState('');
   const [nutritionBasis, setNutritionBasis] = useState<NutritionBasis>('per_serving');
-  const [servingValue, setServingValue] = useState('');
-  const [servingUnit, setServingUnit] = useState<'g' | 'oz'>(settings.preferredUnit);
+  const [servingInput, setServingInput] = useState('');
   const [calories, setCalories] = useState('');
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
@@ -51,27 +77,11 @@ export default function FoodEditor() {
   const [showDelete, setShowDelete] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Parse the serving input
+  const parsedServing = useMemo(() => parseServingSize(servingInput), [servingInput]);
+
   // Check if we have prefill data from URL params
   const hasPrefillData = prefillName || prefillCalories || prefillProtein || prefillCarbs || prefillFat;
-
-  // Convert serving value to grams for storage
-  const getServingGrams = (): number => {
-    const value = parseFloat(servingValue) || 0;
-    return servingUnit === 'oz' ? ouncesToGrams(value) : value;
-  };
-
-  // Handle unit change with conversion
-  const handleUnitChange = (newUnit: 'g' | 'oz') => {
-    if (servingValue && !isNaN(parseFloat(servingValue))) {
-      const currentValue = parseFloat(servingValue);
-      if (newUnit === 'oz' && servingUnit === 'g') {
-        setServingValue(gramsToOunces(currentValue).toFixed(1));
-      } else if (newUnit === 'g' && servingUnit === 'oz') {
-        setServingValue(ouncesToGrams(currentValue).toFixed(0));
-      }
-    }
-    setServingUnit(newUnit);
-  };
 
   // Initialize from existing food or prefill
   useEffect(() => {
@@ -93,12 +103,7 @@ export default function FoodEditor() {
       }
       
       if (existingFood.servingGrams) {
-        // Display in user's preferred unit
-        if (servingUnit === 'oz') {
-          setServingValue(gramsToOunces(existingFood.servingGrams).toFixed(1));
-        } else {
-          setServingValue(existingFood.servingGrams.toString());
-        }
+        setServingInput(existingFood.servingGrams.toString() + 'g');
       }
     } else if (hasPrefillData) {
       // Pre-fill from URL params (from scanned/searched product)
@@ -132,8 +137,8 @@ export default function FoodEditor() {
     if (!fat || parseFloat(fat) < 0) {
       newErrors.fat = 'Valid fat required';
     }
-    if (nutritionBasis === 'per_serving' && (!servingValue || parseFloat(servingValue) <= 0)) {
-      newErrors.servingValue = 'Serving size required';
+    if (nutritionBasis === 'per_serving' && (!parsedServing.grams || parsedServing.grams <= 0)) {
+      newErrors.servingInput = 'Valid serving size required (e.g., 85g or 3oz)';
     }
     
     setErrors(newErrors);
@@ -159,7 +164,7 @@ export default function FoodEditor() {
         ? { macrosPer100g: macros }
         : { 
             macrosPerServing: macros, 
-            servingGrams: getServingGrams()
+            servingGrams: parsedServing.grams || 0
           }
       ),
     };
@@ -287,18 +292,22 @@ export default function FoodEditor() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="serving" className="text-sm text-muted-foreground">Serving Size *</Label>
-                <UnitToggle value={servingUnit} onChange={handleUnitChange} size="sm" />
+                {parsedServing.display && (
+                  <span className="text-xs text-primary font-medium">{parsedServing.display}</span>
+                )}
               </div>
               <Input
                 id="serving"
-                type="number"
-                inputMode="decimal"
-                value={servingValue}
-                onChange={(e) => setServingValue(e.target.value)}
-                placeholder={servingUnit === 'g' ? 'e.g., 85' : 'e.g., 3'}
-                className={cn('bg-background border-0 rounded-xl', errors.servingValue && 'ring-2 ring-destructive')}
+                type="text"
+                value={servingInput}
+                onChange={(e) => setServingInput(e.target.value)}
+                placeholder="e.g., 85g, 3oz, 200"
+                className={cn('bg-background border-0 rounded-xl', errors.servingInput && 'ring-2 ring-destructive')}
               />
-              {errors.servingValue && <p className="text-sm text-destructive">{errors.servingValue}</p>}
+              <p className="text-xs text-muted-foreground">
+                Enter a number (defaults to grams) or include a unit like "3oz" or "100g"
+              </p>
+              {errors.servingInput && <p className="text-sm text-destructive">{errors.servingInput}</p>}
             </div>
           )}
         </div>
