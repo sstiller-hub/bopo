@@ -522,7 +522,7 @@ function MacroProgressBar({
             width: `${percentage}%`,
             background: isOver 
               ? 'linear-gradient(90deg, rgba(239, 68, 68, 0.7) 0%, rgba(239, 68, 68, 0.9) 100%)' 
-              : `linear-gradient(90deg, ${color}99 0%, ${color} 100%)`,
+              : `linear-gradient(90deg, ${color.replace(')', ', 0.7)')}, ${color})`,
             boxShadow: isOver 
               ? '0 0 12px rgba(239, 68, 68, 0.5)' 
               : `0 0 12px ${glowColor}`
