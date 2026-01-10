@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Plus, ChevronRight, Package, Check, RotateCcw } from 'lucide-react';
+import { ChevronDown, Plus, ChevronRight, Package, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Entry, Macros, MealType } from '@/types/nutrition';
@@ -46,11 +46,9 @@ export function MealSection({
   const [isExpanded, setIsExpanded] = useState(!isCompleted);
   const [expandedRecipes, setExpandedRecipes] = useState<Set<string>>(new Set());
 
-  // Auto-collapse when completed
+  // Auto-collapse when completed, auto-expand when uncompleted
   useEffect(() => {
-    if (isCompleted) {
-      setIsExpanded(false);
-    }
+    setIsExpanded(!isCompleted);
   }, [isCompleted]);
 
   const toggleRecipeExpanded = (recipeId: string) => {
@@ -71,73 +69,68 @@ export function MealSection({
   };
 
   return (
-    <div className={cn("glass-card", isCompleted && "opacity-80")}>
+    <div className={cn("glass-card transition-all duration-300", isCompleted && "opacity-75")}>
       {/* Header */}
-      <div
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
           "w-full flex items-center justify-between p-4 transition-colors rounded-t-3xl",
           !isCompleted && "hover:bg-white/5 dark:hover:bg-white/5"
         )}
       >
-        {/* Complete/Undo button */}
-        {entries.length > 0 && onToggleCompleted && (
-          <button
-            onClick={handleToggleCompleted}
-            className={cn(
-              "w-7 h-7 rounded-full flex items-center justify-center mr-3 transition-all",
-              isCompleted 
-                ? "bg-green-500/20 text-green-400 hover:bg-green-500/30" 
-                : "bg-white/5 text-muted-foreground hover:bg-white/10"
-            )}
-            title={isCompleted ? "Undo completion" : "Mark as done"}
-          >
-            {isCompleted ? <RotateCcw className="w-3.5 h-3.5" /> : <Check className="w-4 h-4" />}
-          </button>
-        )}
-        
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex-1 flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
-            <span className={cn(
-              "font-semibold",
-              isCompleted 
-                ? "text-muted-foreground line-through" 
-                : "text-foreground dark:text-white/95"
-            )}>
-              {title}
-            </span>
-            <span className="text-sm text-muted-foreground dark:text-white/45 font-tabular">
-              {entries.length} {entries.length === 1 ? 'item' : 'items'}
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Mini macro summary */}
-            <div className="flex items-center gap-3 text-xs font-tabular">
-              <span className={cn("font-semibold", isCompleted ? "text-muted-foreground" : "text-calories")}>
-                {Math.round(totals.calories)}
-              </span>
-              <span className="text-muted-foreground/50 dark:text-white/20">•</span>
-              <span className={isCompleted ? "text-muted-foreground" : "text-protein"}>
-                {Math.round(totals.protein)}P
-              </span>
-              <span className={isCompleted ? "text-muted-foreground" : "text-carbs"}>
-                {Math.round(totals.carbs)}C
-              </span>
-              <span className={isCompleted ? "text-muted-foreground" : "text-fat"}>
-                {Math.round(totals.fat)}F
-              </span>
-            </div>
-            <ChevronDown 
+        <div className="flex items-center gap-3">
+          {/* Completion indicator - subtle inline checkmark */}
+          {entries.length > 0 && onToggleCompleted && (
+            <div
+              onClick={handleToggleCompleted}
               className={cn(
-                'w-5 h-5 text-muted-foreground dark:text-white/50 transition-transform',
-                isExpanded && 'rotate-180'
-              )} 
-            />
+                "w-5 h-5 rounded-full flex items-center justify-center transition-all cursor-pointer",
+                isCompleted 
+                  ? "bg-primary/20 text-primary" 
+                  : "border border-white/20 text-transparent hover:border-white/40 hover:text-white/30"
+              )}
+            >
+              <Check className="w-3 h-3" />
+            </div>
+          )}
+          
+          <span className={cn(
+            "font-semibold transition-all",
+            isCompleted 
+              ? "text-muted-foreground" 
+              : "text-foreground dark:text-white/95"
+          )}>
+            {title}
+          </span>
+          <span className="text-sm text-muted-foreground dark:text-white/45 font-tabular">
+            {entries.length} {entries.length === 1 ? 'item' : 'items'}
+          </span>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Mini macro summary */}
+          <div className="flex items-center gap-3 text-xs font-tabular">
+            <span className={cn("font-semibold", isCompleted ? "text-muted-foreground" : "text-calories")}>
+              {Math.round(totals.calories)}
+            </span>
+            <span className="text-muted-foreground/50 dark:text-white/20">•</span>
+            <span className={isCompleted ? "text-muted-foreground" : "text-protein"}>
+              {Math.round(totals.protein)}P
+            </span>
+            <span className={isCompleted ? "text-muted-foreground" : "text-carbs"}>
+              {Math.round(totals.carbs)}C
+            </span>
+            <span className={isCompleted ? "text-muted-foreground" : "text-fat"}>
+              {Math.round(totals.fat)}F
+            </span>
           </div>
-        </button>
-      </div>
+          <ChevronDown 
+            className={cn(
+              'w-5 h-5 text-muted-foreground dark:text-white/50 transition-transform',
+              isExpanded && 'rotate-180'
+            )} 
+          />
+        </div>
+      </button>
 
       {/* Entries */}
       <AnimatePresence>
