@@ -286,6 +286,15 @@
     }
   }
 
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(200%);
+    }
+  }
+
   /* KovaFit pill nav */
   .nav-pill {
     @apply relative flex flex-row items-center w-full max-w-[520px] px-1.5 py-1.5 rounded-full;
