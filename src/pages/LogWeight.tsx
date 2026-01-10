@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Scale, Check, Calendar, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Scale, Check, Calendar, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useWeightLog } from '@/hooks/useWeightLog';
+import { WeightHistoryChart } from '@/components/WeightHistoryChart';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -14,13 +15,14 @@ type WeightUnit = 'lb' | 'kg';
 
 export default function LogWeight() {
   const navigate = useNavigate();
-  const { saveWeight, saving, validateWeight, lbToKg, kgToLb, latestEntry } = useWeightLog();
+  const { saveWeight, saving, validateWeight, lbToKg, kgToLb, latestEntry, entries, loading } = useWeightLog();
   
   const [weight, setWeight] = useState('');
   const [unit, setUnit] = useState<WeightUnit>('lb');
   const [notes, setNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(true);
 
   // Pre-fill with last weight if available
   useEffect(() => {
@@ -192,27 +194,11 @@ export default function LogWeight() {
           )}
         </motion.div>
 
-        {/* Last Entry */}
-        {latestEntry && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-muted/50 rounded-xl p-4"
-          >
-            <p className="text-sm text-muted-foreground text-center">
-              Last logged: <span className="font-medium text-foreground">{latestEntry.weight_lb} lb</span>
-              <span className="mx-2">·</span>
-              {format(new Date(latestEntry.measured_at), 'MMM d')}
-            </p>
-          </motion.div>
-        )}
-
         {/* Save Button */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
+          transition={{ delay: 0.1 }}
         >
           <Button
             onClick={handleSave}
@@ -229,6 +215,27 @@ export default function LogWeight() {
             )}
           </Button>
         </motion.div>
+
+        {/* History Section */}
+        {entries.length > 0 && (
+          <div className="pt-4">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="flex items-center justify-between w-full mb-3"
+            >
+              <h2 className="font-semibold text-foreground">History</h2>
+              {showHistory ? (
+                <ChevronUp className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              )}
+            </button>
+            
+            {showHistory && (
+              <WeightHistoryChart entries={entries} unit={unit} loading={loading} />
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
