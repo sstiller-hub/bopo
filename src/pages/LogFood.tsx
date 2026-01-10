@@ -539,8 +539,14 @@ function ApiProductCard({
   product: OpenFoodFactsProduct; 
   onClick: () => void;
 }) {
-  const foodData = convertToFoodData(product);
-  const macros = foodData.macrosPer100g;
+  const nutriments = product.nutriments || {};
+  const hasServingData = nutriments['energy-kcal_serving'] !== undefined;
+  
+  const displayCalories = hasServingData 
+    ? Math.round(nutriments['energy-kcal_serving'] || 0)
+    : Math.round(nutriments['energy-kcal_100g'] || 0);
+  
+  const displayLabel = hasServingData ? 'per serving' : 'per 100g';
 
   return (
     <button
@@ -564,8 +570,8 @@ function ApiProductCard({
           )}
         </div>
         <div className="text-right flex-shrink-0">
-          <div className="text-sm font-semibold text-calories">{macros?.calories || 0} kcal</div>
-          <div className="text-[10px] text-muted-foreground">per 100g</div>
+          <div className="text-sm font-semibold text-calories">{displayCalories} kcal</div>
+          <div className="text-[10px] text-muted-foreground">{displayLabel}</div>
         </div>
       </div>
     </button>
