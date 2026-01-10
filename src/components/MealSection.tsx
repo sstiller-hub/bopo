@@ -106,12 +106,7 @@ export function MealSection({
             </div>
           )}
           
-          <span className={cn(
-            "font-semibold transition-all",
-            isCompleted 
-              ? "text-muted-foreground" 
-              : "text-foreground dark:text-white/95"
-          )}>
+          <span className="font-semibold text-foreground dark:text-white/95">
             {title}
           </span>
           <span className="text-xs text-muted-foreground dark:text-white/45 font-tabular flex-shrink-0">
