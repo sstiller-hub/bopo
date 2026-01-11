@@ -12,6 +12,7 @@ import { useMealTemplates, MealTemplate } from '@/hooks/useMealTemplates';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MealType, Entry, Macros } from '@/types/nutrition';
 import { toast } from 'sonner';
+import { getDefaultMeal, setStoredMeal } from '@/lib/meals';
 
 const meals: { key: MealType; defaultName: string }[] = [
   { key: 'breakfast', defaultName: 'Breakfast' },
@@ -135,6 +136,7 @@ export default function TodayDashboard() {
       amountGrams: 0,
       computedMacros: data.macros,
     });
+    setStoredMeal(data.meal);
     toast.success('Quick entry added');
   };
 
@@ -549,7 +551,7 @@ export default function TodayDashboard() {
           transition={{ delay: 0.3, type: 'spring' }}
         >
           <button
-            onClick={() => navigate('/log')}
+            onClick={() => navigate(`/log?meal=${getDefaultMeal()}`)}
             className="h-14 w-14 rounded-full flex items-center justify-center transition-all active:scale-95 bg-gradient-primary"
             style={{
               boxShadow: '0 8px 24px rgba(59, 130, 246, 0.35), 0 0 20px rgba(59, 130, 246, 0.15)',
@@ -567,6 +569,7 @@ export default function TodayDashboard() {
         isOpen={showQuickAdd}
         onClose={() => setShowQuickAdd(false)}
         onSave={handleQuickAdd}
+        defaultMeal={getDefaultMeal()}
       />
     </main>
   );

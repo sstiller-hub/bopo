@@ -1,22 +1,73 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ScanLine, Clock, Star, X, ArrowLeft, Loader2, Check } from 'lucide-react';
+import type { IScannerControls } from '@zxing/browser';
 import { BottomNav } from '@/components/BottomNav';
 import { FoodCard } from '@/components/FoodCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useFoods } from '@/hooks/useNutritionStore';
-import { Food } from '@/types/nutrition';
+import { useFoods, useSettings } from '@/hooks/useNutritionStore';
+import { Food, MealType } from '@/types/nutrition';
 import { fetchProductByBarcode, searchProducts, convertToFoodData, OpenFoodFactsProduct } from '@/lib/openFoodFacts';
+import { defaultMealLabels, getDefaultMeal, isMealType, setStoredMeal } from '@/lib/meals';
 import { toast } from 'sonner';
 
 type TabType = 'recent' | 'search' | 'scan';
 
+const SEARCH_STOP_WORDS = new Set([
+  'fruit',
+  'fresh',
+  'raw',
+  'whole',
+  'organic',
+  'plain',
+  'food',
+]);
+
+function normalizeSearchQuery(query: string) {
+  const tokens = query
+    .toLowerCase()
+    .replace(/[^a-z0-9\\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter(token => !SEARCH_STOP_WORDS.has(token));
+  return tokens.join(' ');
+}
+
+function scoreApiProduct(product: OpenFoodFactsProduct, query: string) {
+  const queryLower = query.toLowerCase().trim();
+  if (!queryLower) return 0;
+
+  const name = (product.product_name || '').toLowerCase();
+  const brand = (product.brands || '').toLowerCase();
+  const nameTokens = name.split(/[^a-z0-9]+/).filter(Boolean);
+  const queryTokens = queryLower.split(/\s+/).filter(Boolean);
+
+  let score = 0;
+
+  if (name === queryLower) score += 120;
+  if (name.startsWith(queryLower)) score += 60;
+  if (name.includes(queryLower)) score += 30;
+  if (!brand) score += 20;
+  if (queryTokens.length === 1 && nameTokens.length <= 2) score += 20;
+
+  const packagedTokens = [
+    'bar', 'bars', 'juice', 'drink', 'snack', 'sauce', 'jam', 'spread',
+    'flavor', 'flavoured', 'flavored', 'cookie', 'candy', 'chips',
+  ];
+  if (packagedTokens.some(token => nameTokens.includes(token))) {
+    score -= 20;
+  }
+
+  return score;
+}
+
 export default function LogFood() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const meal = searchParams.get('meal') || 'snacks';
+  const [searchParams, setSearchParams] = useSearchParams();
+  const mealParam = searchParams.get('meal');
+  const meal: MealType = isMealType(mealParam) ? mealParam : getDefaultMeal();
   
   const [activeTab, setActiveTab] = useState<TabType>('recent');
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,14 +78,40 @@ export default function LogFood() {
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   
   const { getRecentFoods, getFavorites, searchFoods, findByBarcode, addFood } = useFoods();
+  const { settings } = useSettings();
   
+  const normalizedSearchQuery = useMemo(() => normalizeSearchQuery(searchQuery), [searchQuery]);
+  const searchTerm = normalizedSearchQuery || searchQuery.trim();
   const recentFoods = getRecentFoods(20);
   const favorites = getFavorites();
-  const localSearchResults = searchQuery.length >= 2 ? searchFoods(searchQuery) : [];
+  const localSearchResults = searchTerm.length >= 2 ? searchFoods(searchTerm) : [];
+  const rankedApiResults = useMemo(() => {
+    if (!searchTerm) return apiSearchResults;
+    return [...apiSearchResults].sort((a, b) => scoreApiProduct(b, searchTerm) - scoreApiProduct(a, searchTerm));
+  }, [apiSearchResults, searchTerm]);
+  const mealLabels = {
+    breakfast: settings.mealNames?.breakfast ?? defaultMealLabels.breakfast,
+    lunch: settings.mealNames?.lunch ?? defaultMealLabels.lunch,
+    dinner: settings.mealNames?.dinner ?? defaultMealLabels.dinner,
+    snacks: settings.mealNames?.snacks ?? defaultMealLabels.snacks,
+  };
+  const mealOptions: { key: MealType; label: string }[] = [
+    { key: 'breakfast', label: mealLabels.breakfast },
+    { key: 'lunch', label: mealLabels.lunch },
+    { key: 'dinner', label: mealLabels.dinner },
+    { key: 'snacks', label: mealLabels.snacks },
+  ];
+
+  useEffect(() => {
+    if (!mealParam || mealParam !== meal) {
+      setSearchParams({ meal }, { replace: true });
+    }
+    setStoredMeal(meal);
+  }, [meal, mealParam, setSearchParams]);
 
   // Debounced API search
   useEffect(() => {
-    if (searchQuery.length < 2) {
+    if (searchTerm.length < 2) {
       setApiSearchResults([]);
       return;
     }
@@ -45,7 +122,7 @@ export default function LogFood() {
 
     searchTimeoutRef.current = setTimeout(async () => {
       setIsSearching(true);
-      const result = await searchProducts(searchQuery, 15);
+      const result = await searchProducts(searchTerm, 40);
       setIsSearching(false);
       if (result.success) {
         setApiSearchResults(result.products);
@@ -57,7 +134,7 @@ export default function LogFood() {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery]);
+  }, [searchQuery, searchTerm]);
 
   const handleApiProductSelect = (product: OpenFoodFactsProduct) => {
     setScannedProduct(product);
@@ -103,7 +180,9 @@ export default function LogFood() {
       barcode: foodData.barcode,
       nutritionBasis: foodData.nutritionBasis,
       macrosPer100g: foodData.macrosPer100g,
+      macrosPerServing: foodData.macrosPerServing,
       servingGrams: foodData.servingGrams,
+      servingLabel: foodData.servingLabel,
       isFavorite: false,
     });
 
@@ -151,8 +230,28 @@ export default function LogFood() {
           </button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-foreground">Log Food</h1>
-            <p className="text-sm text-muted-foreground capitalize">{meal}</p>
+            <p className="text-sm text-muted-foreground">{mealLabels[meal]}</p>
           </div>
+        </div>
+      </div>
+
+      {/* Meal switcher */}
+      <div className="px-4 pb-3">
+        <div className="grid grid-cols-4 gap-2 p-1 bg-card rounded-2xl shadow-sm">
+          {mealOptions.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setSearchParams({ meal: key }, { replace: true })}
+              aria-pressed={meal === key}
+              className={`py-2 rounded-xl text-[11px] font-medium transition-all ${
+                meal === key
+                  ? 'bg-gradient-primary text-white shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span className="truncate">{label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -259,7 +358,7 @@ export default function LogFood() {
               </div>
 
               {/* Results */}
-              {searchQuery.length >= 2 ? (
+              {searchTerm.length >= 2 ? (
                 <div className="space-y-4">
                   {/* Local library results */}
                   {localSearchResults.length > 0 && (
@@ -285,9 +384,9 @@ export default function LogFood() {
                         <Loader2 className="w-5 h-5 animate-spin text-primary mr-2" />
                         <span className="text-muted-foreground text-sm">Searching...</span>
                       </div>
-                    ) : apiSearchResults.length > 0 ? (
+                    ) : rankedApiResults.length > 0 ? (
                       <div className="space-y-2">
-                        {apiSearchResults.map(product => (
+                        {rankedApiResults.map(product => (
                           <ApiProductCard 
                             key={product.code} 
                             product={product} 
@@ -469,7 +568,7 @@ function ScannedProductPreview({
 function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
   const hasScannedRef = useRef(false);
 
   useEffect(() => {

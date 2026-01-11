@@ -2,6 +2,7 @@ import { Home, Search, Book, History, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
+import { getDefaultMeal } from '@/lib/meals';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Today' },
@@ -22,6 +23,14 @@ export function BottomNav() {
 
   const indicatorWidth = `calc(${100 / navItems.length}% - 2.4px)`;
   const indicatorLeft = `calc(${(activeIndex / navItems.length) * 100}% + 6px)`;
+
+  const handleNavigate = (path: string) => {
+    if (path === '/log') {
+      navigate(`/log?meal=${getDefaultMeal()}`);
+      return;
+    }
+    navigate(path);
+  };
 
   return (
     <nav 
@@ -45,7 +54,7 @@ export function BottomNav() {
           return (
             <button
               key={path}
-              onClick={() => navigate(path)}
+              onClick={() => handleNavigate(path)}
               className={cn(
                 'relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2.5 transition-colors duration-200 focus-visible:outline-none',
                 isActive 

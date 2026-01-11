@@ -52,29 +52,49 @@ export function useMealTemplates() {
   const [templates, setTemplates] = useState<MealTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch templates
-  useEffect(() => {
+  const fetchTemplates = useCallback(async () => {
     if (!user) {
       setTemplates([]);
       setLoading(false);
       return;
     }
 
-    async function fetchTemplates() {
-      const { data } = await supabase
-        .from('meal_templates')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('use_count', { ascending: false });
+    const { data } = await supabase
+      .from('meal_templates')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('use_count', { ascending: false });
 
-      if (data) {
-        setTemplates(data.map((d) => dbTemplateToTemplate(d as unknown as DbMealTemplate)));
-      }
-      setLoading(false);
+    if (data) {
+      setTemplates(data.map((d) => dbTemplateToTemplate(d as unknown as DbMealTemplate)));
     }
-
-    fetchTemplates();
+    setLoading(false);
   }, [user]);
+
+  // Fetch templates
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  // Real-time sync for templates across devices
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`meal-templates-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'meal_templates', filter: `user_id=eq.${user.id}` },
+        () => {
+          fetchTemplates();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchTemplates]);
 
   const createTemplate = useCallback(async (
     name: string,

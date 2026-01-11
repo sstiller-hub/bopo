@@ -27,6 +27,7 @@ type DbFood = {
   carbs_per_serving: number | null;
   fat_per_serving: number | null;
   serving_grams: number | null;
+  serving_label: string | null;
   source: 'user' | 'open_food_facts';
   is_favorite: boolean;
   use_count: number;
@@ -100,6 +101,7 @@ function dbFoodToFood(db: DbFood): Food {
       fat: db.fat_per_serving || 0,
     } : undefined,
     servingGrams: db.serving_grams || undefined,
+    servingLabel: db.serving_label || undefined,
     source: db.source,
     isFavorite: db.is_favorite,
     useCount: db.use_count,
@@ -260,29 +262,49 @@ export function useFoods() {
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch foods
-  useEffect(() => {
+  const fetchFoods = useCallback(async () => {
     if (!user) {
       setFoods([]);
       setLoading(false);
       return;
     }
 
-    async function fetchFoods() {
-      const { data } = await supabase
-        .from('foods')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('name');
+    const { data } = await supabase
+      .from('foods')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('name');
 
-      if (data) {
-        setFoods(data.map((d) => dbFoodToFood(d as DbFood)));
-      }
-      setLoading(false);
+    if (data) {
+      setFoods(data.map((d) => dbFoodToFood(d as DbFood)));
     }
-
-    fetchFoods();
+    setLoading(false);
   }, [user]);
+
+  // Fetch foods
+  useEffect(() => {
+    fetchFoods();
+  }, [fetchFoods]);
+
+  // Real-time sync for foods (recents/favorites across devices)
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`foods-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'foods', filter: `user_id=eq.${user.id}` },
+        () => {
+          fetchFoods();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchFoods]);
 
   const addFood = useCallback(async (food: Omit<Food, 'id' | 'useCount' | 'source'>) => {
     if (!user) return null;
@@ -302,6 +324,7 @@ export function useFoods() {
       carbs_per_serving: food.macrosPerServing?.carbs || null,
       fat_per_serving: food.macrosPerServing?.fat || null,
       serving_grams: food.servingGrams || null,
+      serving_label: food.servingLabel || null,
       is_favorite: food.isFavorite || false,
     };
 
@@ -340,6 +363,7 @@ export function useFoods() {
       dbUpdates.fat_per_serving = updates.macrosPerServing?.fat || null;
     }
     if (updates.servingGrams !== undefined) dbUpdates.serving_grams = updates.servingGrams || null;
+    if (updates.servingLabel !== undefined) dbUpdates.serving_label = updates.servingLabel || null;
     if (updates.isFavorite !== undefined) dbUpdates.is_favorite = updates.isFavorite;
 
     await supabase

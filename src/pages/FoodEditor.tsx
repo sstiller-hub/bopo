@@ -70,6 +70,7 @@ export default function FoodEditor() {
   const [barcode, setBarcode] = useState('');
   const [nutritionBasis, setNutritionBasis] = useState<NutritionBasis>('per_serving');
   const [servingInput, setServingInput] = useState('');
+  const [servingLabel, setServingLabel] = useState('');
   const [calories, setCalories] = useState('');
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
@@ -105,6 +106,7 @@ export default function FoodEditor() {
       if (existingFood.servingGrams) {
         setServingInput(existingFood.servingGrams.toString() + 'g');
       }
+      setServingLabel(existingFood.servingLabel || '');
     } else if (hasPrefillData) {
       // Pre-fill from URL params (from scanned/searched product)
       if (prefillName) setName(prefillName);
@@ -164,7 +166,8 @@ export default function FoodEditor() {
         ? { macrosPer100g: macros }
         : { 
             macrosPerServing: macros, 
-            servingGrams: parsedServing.grams || 0
+            servingGrams: parsedServing.grams || 0,
+            servingLabel: servingLabel.trim() || undefined,
           }
       ),
     };
@@ -314,6 +317,20 @@ export default function FoodEditor() {
               <p className="text-xs text-muted-foreground">
                 Enter a number (defaults to grams) or include a unit like "3oz" or "100g"
               </p>
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="servingLabel" className="text-sm text-muted-foreground">Serving Label (optional)</Label>
+                <Input
+                  id="servingLabel"
+                  type="text"
+                  value={servingLabel}
+                  onChange={(e) => setServingLabel(e.target.value)}
+                  placeholder="e.g., package, 4 waffles"
+                  className="bg-background border-0 rounded-xl"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This shows as "1 serving = 4 waffles"
+                </p>
+              </div>
               {errors.servingInput && <p className="text-sm text-destructive">{errors.servingInput}</p>}
             </div>
           )}

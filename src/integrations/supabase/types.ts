@@ -141,6 +141,7 @@ export type Database = {
           protein_per_100g: number | null
           protein_per_serving: number | null
           serving_grams: number | null
+          serving_label: string | null
           source: Database["public"]["Enums"]["food_source"]
           updated_at: string
           use_count: number
@@ -164,6 +165,7 @@ export type Database = {
           protein_per_100g?: number | null
           protein_per_serving?: number | null
           serving_grams?: number | null
+          serving_label?: string | null
           source?: Database["public"]["Enums"]["food_source"]
           updated_at?: string
           use_count?: number
@@ -187,6 +189,7 @@ export type Database = {
           protein_per_100g?: number | null
           protein_per_serving?: number | null
           serving_grams?: number | null
+          serving_label?: string | null
           source?: Database["public"]["Enums"]["food_source"]
           updated_at?: string
           use_count?: number

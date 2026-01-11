@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,12 @@ export function QuickAddModal({ isOpen, onClose, onSave, defaultMeal = 'snacks' 
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
   const [fat, setFat] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setMeal(defaultMeal);
+    }
+  }, [defaultMeal, isOpen]);
 
   const handleSave = () => {
     if (!calories && !protein && !carbs && !fat) return;

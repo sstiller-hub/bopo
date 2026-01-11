@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Heart, Save, ChevronDown } from 'lucide-react';
@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { UnitToggle } from '@/components/UnitToggle';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useFoods, useEntries, useSettings } from '@/hooks/useNutritionStore';
 import { 
   Food, 
@@ -17,6 +23,9 @@ import {
   Macros 
 } from '@/types/nutrition';
 import { cn } from '@/lib/utils';
+import { getDefaultMeal, isMealType, setStoredMeal } from '@/lib/meals';
+
+type ServingUnit = 'serving' | 'g' | 'oz';
 
 const mealOptions: { key: MealType; label: string }[] = [
   { key: 'breakfast', label: 'Breakfast' },
@@ -25,12 +34,19 @@ const mealOptions: { key: MealType; label: string }[] = [
   { key: 'snacks', label: 'Snacks' },
 ];
 
+function formatServingValue(value: number) {
+  if (!Number.isFinite(value)) return '';
+  if (value % 1 === 0) return value.toString();
+  return value.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+}
+
 export default function ConfirmEntry() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const foodId = searchParams.get('foodId');
   const entryId = searchParams.get('entryId');
-  const initialMeal = (searchParams.get('meal') as MealType) || 'snacks';
+  const mealParam = searchParams.get('meal');
+  const initialMeal = isMealType(mealParam) ? mealParam : getDefaultMeal();
   
   const { foods, updateFood, incrementFoodUsage } = useFoods();
   const { entries, addEntry, updateEntry } = useEntries();
@@ -38,10 +54,11 @@ export default function ConfirmEntry() {
   
   const [selectedMeal, setSelectedMeal] = useState<MealType>(initialMeal);
   const [amountValue, setAmountValue] = useState('100');
-  const [unit, setUnit] = useState<'g' | 'oz'>(settings.preferredUnit);
+  const [servingUnit, setServingUnit] = useState<ServingUnit>('g');
   const [note, setNote] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [showMealPicker, setShowMealPicker] = useState(false);
+  const initRef = useRef<string | null>(null);
 
   // Get food data
   const existingEntry = entryId ? entries.find(e => e.id === entryId) : null;
@@ -54,49 +71,79 @@ export default function ConfirmEntry() {
 
   // Initialize from existing entry or default to serving size
   useEffect(() => {
+    if (!food) return;
+    const key = existingEntry?.id ?? `food-${food.id}`;
+    if (initRef.current === key) return;
+    initRef.current = key;
+
     if (existingEntry) {
       setSelectedMeal(existingEntry.meal);
       setNote(existingEntry.note || '');
-      const displayAmount = unit === 'oz' 
-        ? gramsToOunces(existingEntry.amountGrams).toFixed(1)
-        : existingEntry.amountGrams.toString();
-      setAmountValue(displayAmount);
-    } else if (food) {
-      // Default to serving size if available, otherwise 100g
-      const defaultGrams = food.servingGrams || 100;
-      const displayAmount = unit === 'oz' 
-        ? gramsToOunces(defaultGrams).toFixed(1)
-        : defaultGrams.toString();
-      setAmountValue(displayAmount);
+      if (food.nutritionBasis === 'per_serving' && food.servingGrams) {
+        setServingUnit('serving');
+        const servings = existingEntry.amountGrams / food.servingGrams;
+        setAmountValue(formatServingValue(servings));
+      } else {
+        const preferredUnit = settings.preferredUnit;
+        setServingUnit(preferredUnit);
+        const displayAmount = preferredUnit === 'oz' 
+          ? gramsToOunces(existingEntry.amountGrams)
+          : existingEntry.amountGrams;
+        setAmountValue(formatServingValue(displayAmount));
+      }
+    } else {
+      if (food.nutritionBasis === 'per_serving' && food.servingGrams) {
+        setServingUnit('serving');
+        setAmountValue('1');
+      } else {
+        const preferredUnit = settings.preferredUnit;
+        setServingUnit(preferredUnit);
+        const displayAmount = preferredUnit === 'oz' ? gramsToOunces(100) : 100;
+        setAmountValue(formatServingValue(displayAmount));
+      }
     }
-    if (food) {
-      setIsFavorite(food.isFavorite || false);
-    }
-  }, [existingEntry, food, unit]);
+
+    setIsFavorite(food.isFavorite || false);
+  }, [existingEntry?.id, food, settings.preferredUnit]);
+
+  const servingLabel = food?.servingLabel?.trim() || '';
+  const servingGrams = food?.servingGrams || 0;
+  const servingOunces = servingGrams ? gramsToOunces(servingGrams) : 0;
 
   // Calculate macros
   const amountGrams = useMemo(() => {
     const numValue = parseFloat(amountValue) || 0;
-    return unit === 'oz' ? ouncesToGrams(numValue) : numValue;
-  }, [amountValue, unit]);
+    if (servingUnit === 'serving') {
+      return servingGrams ? numValue * servingGrams : numValue;
+    }
+    return servingUnit === 'oz' ? ouncesToGrams(numValue) : numValue;
+  }, [amountValue, servingUnit, servingGrams]);
 
   const computedMacros = useMemo<Macros>(() => {
     if (!food) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
     return calculateMacros(food, amountGrams);
   }, [food, amountGrams]);
 
-  const handleUnitChange = (newUnit: 'g' | 'oz') => {
-    const currentGrams = unit === 'oz' 
-      ? ouncesToGrams(parseFloat(amountValue) || 0)
-      : parseFloat(amountValue) || 0;
-    
-    const newValue = newUnit === 'oz'
-      ? gramsToOunces(currentGrams).toFixed(1)
-      : Math.round(currentGrams).toString();
-    
-    setUnit(newUnit);
-    setAmountValue(newValue);
-    updateSettings({ preferredUnit: newUnit });
+  const handleServingUnitChange = (nextUnit: ServingUnit) => {
+    const currentValue = parseFloat(amountValue) || 0;
+    const currentGrams = servingUnit === 'serving'
+      ? (servingGrams ? currentValue * servingGrams : currentValue)
+      : servingUnit === 'oz'
+        ? ouncesToGrams(currentValue)
+        : currentValue;
+
+    const nextValue = nextUnit === 'serving'
+      ? (servingGrams ? currentGrams / servingGrams : currentGrams)
+      : nextUnit === 'oz'
+        ? gramsToOunces(currentGrams)
+        : currentGrams;
+
+    setServingUnit(nextUnit);
+    setAmountValue(formatServingValue(nextValue));
+
+    if (nextUnit === 'g' || nextUnit === 'oz') {
+      updateSettings({ preferredUnit: nextUnit });
+    }
   };
 
   const handleSave = () => {
@@ -131,6 +178,7 @@ export default function ConfirmEntry() {
       updateFood(food.id, { isFavorite });
     }
 
+    setStoredMeal(selectedMeal);
     navigate('/');
   };
 
@@ -185,19 +233,35 @@ export default function ConfirmEntry() {
           )}
         </div>
 
-        {/* Amount input with unit toggle */}
+        {/* Serving size + servings */}
         <div className="bg-card rounded-2xl p-4 shadow-sm space-y-3">
-          <Label className="text-sm font-medium text-muted-foreground">Amount</Label>
-          <div className="flex gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-sm font-medium text-muted-foreground">Serving Size</Label>
+            <Select value={servingUnit} onValueChange={handleServingUnitChange}>
+              <SelectTrigger className="h-11 w-40 bg-background border-0 rounded-xl text-sm font-semibold justify-between">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {food.nutritionBasis === 'per_serving' && food.servingGrams && (
+                  <SelectItem value="serving">
+                    {servingLabel ? `1 serving (${servingLabel})` : '1 serving'}
+                  </SelectItem>
+                )}
+                <SelectItem value="g">1 g</SelectItem>
+                <SelectItem value="oz">1 oz</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-sm font-medium text-muted-foreground">Number of Servings</Label>
             <Input
               type="number"
               inputMode="decimal"
               value={amountValue}
               onChange={(e) => setAmountValue(e.target.value)}
-              className="flex-1 h-14 text-2xl font-bold text-center font-tabular bg-background rounded-xl border-0"
+              className="h-12 w-28 text-lg font-bold text-center font-tabular bg-background rounded-xl border-0"
               autoFocus
             />
-            <UnitToggle value={unit} onChange={handleUnitChange} />
           </div>
         </div>
 

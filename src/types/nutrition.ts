@@ -14,6 +14,7 @@ export interface Food {
   macrosPer100g?: Macros;
   macrosPerServing?: Macros;
   servingGrams?: number;
+  servingLabel?: string;
   source: 'user' | 'open_food_facts';
   lastUsedAt?: string;
   useCount: number;

@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const { settings, updateSettings } = useSettings();
+  const { settings, updateSettings, loading } = useSettings();
   const { templates } = useMealTemplates();
   const { theme, setTheme } = useTheme();
   
@@ -27,7 +27,19 @@ export default function SettingsPage() {
   const [restDay, setRestDay] = useState<Macros | null>(settings.templates?.restDay || null);
   const [showTemplates, setShowTemplates] = useState(!!settings.templates?.trainingDay || !!settings.templates?.restDay);
 
+  useEffect(() => {
+    if (loading) return;
+    setTargets(settings.dailyTargets);
+  }, [loading, settings.dailyTargets]);
+
+  useEffect(() => {
+    if (loading) return;
+    setTrainingDay(settings.templates?.trainingDay || null);
+    setRestDay(settings.templates?.restDay || null);
+  }, [loading, settings.templates]);
+
   const handleSaveTargets = () => {
+    if (loading) return;
     updateSettings({ dailyTargets: targets });
     toast.success('Daily targets saved!');
   };
