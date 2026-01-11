@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, ChevronLeft, ChevronRight, Calendar, Zap, Copy, Package, X, Check, RefreshCw } from 'lucide-react';
 import { format, addDays, subDays, isToday, parseISO } from 'date-fns';
@@ -23,6 +23,7 @@ const meals: { key: MealType; defaultName: string }[] = [
 
 export default function TodayDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { settings, loading: settingsLoading } = useSettings();
   const { getEntriesByMeal, getMealTotals, getTotalsForDate, deleteEntry, duplicateEntry, addEntry, copyEntriesFromDate, getEntriesForDate, getIngredients, groupAsRecipe, ungroupRecipe, getWeeklyAverages, refetch: refetchEntries, loading: entriesLoading, refreshing } = useEntries();
@@ -69,6 +70,13 @@ export default function TodayDashboard() {
       window.removeEventListener('focus', handleFocus);
     };
   }, [refetchEntries]);
+
+  useEffect(() => {
+    if (location.state?.refreshEntries) {
+      refetchEntries();
+      navigate(location.pathname + location.search, { replace: true, state: null });
+    }
+  }, [location, navigate, refetchEntries]);
 
   // Check if yesterday has entries and today is empty
   const yesterdayEntries = getEntriesForDate(yesterdayDate);

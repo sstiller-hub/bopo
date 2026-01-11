@@ -179,7 +179,7 @@ export default function ConfirmEntry() {
     }
 
     setStoredMeal(selectedMeal);
-    navigate('/');
+    navigate('/', { state: { refreshEntries: true } });
   };
 
   if (!food) {
