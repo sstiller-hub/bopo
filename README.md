@@ -1,6 +1,6 @@
 # bopo
 
-## Project info
+##  Project info
 
 Vite + React + TypeScript app.
 
