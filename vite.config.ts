@@ -12,16 +12,18 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      manifestFilename: "manifest.json",
       manifest: {
-        name: "Macro Tracker",
-        short_name: "Macros",
+        name: "Bopo",
+        short_name: "Bopo",
         description: "Fast nutrition tracker",
-        theme_color: "#2d9596",
-        background_color: "#fafafa",
+        theme_color: "#000000",
+        background_color: "#000000",
         display: "standalone",
         start_url: "/",
         icons: [
-          { src: "/favicon.ico", sizes: "64x64", type: "image/x-icon" },
+          { src: "/icons/bopo-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icons/bopo-512.png", sizes: "512x512", type: "image/png" },
         ],
       },
     }),

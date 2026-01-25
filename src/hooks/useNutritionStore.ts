@@ -554,28 +554,32 @@ export function useEntries() {
     const insertedEntries: Entry[] = [];
 
     for (const entry of parentEntries) {
+      const insertPayload: Record<string, unknown> = {
+        user_id: user.id,
+        date: targetDate,
+        meal: entry.meal,
+        food_id: entry.foodId || null,
+        food_name: entry.foodName,
+        amount_grams: entry.amountGrams,
+        calories: entry.computedMacros.calories,
+        protein: entry.computedMacros.protein,
+        carbs: entry.computedMacros.carbs,
+        fat: entry.computedMacros.fat,
+        note: entry.note || null,
+      };
+
+      if (entry.isRecipe) {
+        insertPayload.is_recipe = true;
+      }
+
       const { data, error } = await supabase
         .from('entries')
-        .insert({
-          user_id: user.id,
-          date: targetDate,
-          meal: entry.meal,
-          food_id: entry.foodId || null,
-          food_name: entry.foodName,
-          amount_grams: entry.amountGrams,
-          calories: entry.computedMacros.calories,
-          protein: entry.computedMacros.protein,
-          carbs: entry.computedMacros.carbs,
-          fat: entry.computedMacros.fat,
-          note: entry.note || null,
-          parent_entry_id: null,
-          is_recipe: entry.isRecipe || false,
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
       if (!data || error) {
-        return 0;
+        throw error ?? new Error('Failed to copy entry');
       }
 
       const newEntry = dbEntryToEntry(data as DbEntry);
@@ -586,31 +590,36 @@ export function useEntries() {
     for (const entry of childEntries) {
       const newParentId = entry.parentEntryId ? idMap.get(entry.parentEntryId) : null;
       if (!newParentId) {
-        return 0;
+        throw new Error('Failed to map recipe entry');
+      }
+
+      const insertPayload: Record<string, unknown> = {
+        user_id: user.id,
+        date: targetDate,
+        meal: entry.meal,
+        food_id: entry.foodId || null,
+        food_name: entry.foodName,
+        amount_grams: entry.amountGrams,
+        calories: entry.computedMacros.calories,
+        protein: entry.computedMacros.protein,
+        carbs: entry.computedMacros.carbs,
+        fat: entry.computedMacros.fat,
+        note: entry.note || null,
+        parent_entry_id: newParentId,
+      };
+
+      if (entry.isRecipe) {
+        insertPayload.is_recipe = true;
       }
 
       const { data, error } = await supabase
         .from('entries')
-        .insert({
-          user_id: user.id,
-          date: targetDate,
-          meal: entry.meal,
-          food_id: entry.foodId || null,
-          food_name: entry.foodName,
-          amount_grams: entry.amountGrams,
-          calories: entry.computedMacros.calories,
-          protein: entry.computedMacros.protein,
-          carbs: entry.computedMacros.carbs,
-          fat: entry.computedMacros.fat,
-          note: entry.note || null,
-          parent_entry_id: newParentId,
-          is_recipe: entry.isRecipe || false,
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
       if (!data || error) {
-        return 0;
+        throw error ?? new Error('Failed to copy entry');
       }
 
       insertedEntries.push(dbEntryToEntry(data as DbEntry));

@@ -61,6 +61,9 @@ export default function FoodEditor() {
   const prefillCarbs = searchParams.get('carbs');
   const prefillFat = searchParams.get('fat');
   const meal = searchParams.get('meal');
+  const returnToParam = searchParams.get('returnTo');
+  const returnTo = returnToParam ? decodeURIComponent(returnToParam) : null;
+  const safeReturnTo = returnTo && returnTo.startsWith('/') ? returnTo : null;
   
   const { foods, addFood, updateFood, deleteFood } = useFoods();
   const existingFood = editId ? foods.find(f => f.id === editId) : null;
@@ -174,8 +177,16 @@ export default function FoodEditor() {
 
     if (existingFood) {
       await updateFood(existingFood.id, foodData);
+      if (safeReturnTo) {
+        navigate(safeReturnTo);
+        return;
+      }
     } else {
       const newFood = await addFood(foodData);
+      if (safeReturnTo) {
+        navigate(safeReturnTo);
+        return;
+      }
       // If we came from barcode scan, navigate to confirm entry
       if (prefillBarcode && meal && newFood) {
         navigate(`/confirm?foodId=${newFood.id}&meal=${meal}`);
@@ -200,6 +211,10 @@ export default function FoodEditor() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => {
+              if (safeReturnTo) {
+                navigate(safeReturnTo);
+                return;
+              }
               // If we have navigation history, go back; otherwise go to foods or log
               if (window.history.length > 2) {
                 navigate(-1);

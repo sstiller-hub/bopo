@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Heart, Save, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ function formatServingValue(value: number) {
 
 export default function ConfirmEntry() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const foodId = searchParams.get('foodId');
   const entryId = searchParams.get('entryId');
@@ -146,6 +147,12 @@ export default function ConfirmEntry() {
     }
   };
 
+  const handleEditFood = () => {
+    if (!food) return;
+    const returnTo = `${location.pathname}${location.search}`;
+    navigate(`/foods/edit/${food.id}?returnTo=${encodeURIComponent(returnTo)}`);
+  };
+
   const handleSave = () => {
     if (!food) return;
 
@@ -227,10 +234,17 @@ export default function ConfirmEntry() {
       <main className="px-4 pb-32 space-y-4">
         {/* Food info card */}
         <div className="bg-gradient-card rounded-2xl p-4 shadow-sm">
-          <h2 className="text-xl font-bold text-foreground">{food.name}</h2>
-          {food.brand && (
-            <p className="text-muted-foreground text-sm">{food.brand}</p>
-          )}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-xl font-bold text-foreground truncate">{food.name}</h2>
+              {food.brand && (
+                <p className="text-muted-foreground text-sm truncate">{food.brand}</p>
+              )}
+            </div>
+            <Button variant="outline" size="sm" onClick={handleEditFood} className="shrink-0">
+              Edit Food
+            </Button>
+          </div>
         </div>
 
         {/* Serving size + servings */}
