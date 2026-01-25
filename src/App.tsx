@@ -23,15 +23,7 @@ const queryClient = new QueryClient();
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-  
-  if (!user) {
+  if (!loading && !user) {
     return <Navigate to="/auth" replace />;
   }
   
@@ -59,14 +51,6 @@ function SupabaseTokenBridge() {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
   
   return (
     <Routes>

@@ -1,0 +1,31 @@
+interface BopoIconProps {
+  size?: number;
+  opacity?: number;
+  className?: string;
+}
+
+export function BopoIcon({ size = 28, opacity = 0.3, className = "" }: BopoIconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <defs>
+        <linearGradient id="bopo-bg" x1="0" y1="0" x2="0" y2="64">
+          <stop offset="0%" stopColor="#1a1a2c" />
+          <stop offset="100%" stopColor="#0a0a1c" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="64" height="64" rx="12" fill="url(#bopo-bg)" />
+      <rect x="11" y="22" width="6" height="46" rx="3" fill="#FFFFFF" />
+      <circle cx="23" cy="33" r="8" fill="#FFFFFF" />
+      <circle cx="37" cy="33" r="8" fill="#FFFFFF" />
+      <circle cx="24" cy="58" r="10" fill="#FFFFFF" />
+      <circle cx="40" cy="58" r="10" fill="#FFFFFF" />
+    </svg>
+  );
+}
