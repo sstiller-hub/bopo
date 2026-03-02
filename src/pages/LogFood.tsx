@@ -1,19 +1,23 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ScanLine, Clock, Star, X, ArrowLeft, Loader2, Check } from 'lucide-react';
+import { Search, ScanLine, Clock, Star, X, ArrowLeft, Loader2, Check, Sparkles, Mic, MicOff, ChevronDown, ChevronUp } from 'lucide-react';
 import type { IScannerControls } from '@zxing/browser';
+import { format } from 'date-fns';
 import { BottomNav } from '@/components/BottomNav';
 import { FoodCard } from '@/components/FoodCard';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useFoods, useSettings } from '@/hooks/useNutritionStore';
+import { useFoods, useSettings, useEntries } from '@/hooks/useNutritionStore';
 import { Food, MealType } from '@/types/nutrition';
 import { fetchProductByBarcode, searchProducts, convertToFoodData, OpenFoodFactsProduct } from '@/lib/openFoodFacts';
 import { defaultMealLabels, getDefaultMeal, isMealType, setStoredMeal } from '@/lib/meals';
+import { parseFoodLog, ParsedFoodItem } from '@/lib/parseFoodLog';
 import { toast } from 'sonner';
 
 type TabType = 'recent' | 'search' | 'scan';
+type Step = 'input' | 'review';
 
 const SEARCH_STOP_WORDS = new Set([
   'fruit',
@@ -68,7 +72,17 @@ export default function LogFood() {
   const [searchParams, setSearchParams] = useSearchParams();
   const mealParam = searchParams.get('meal');
   const meal: MealType = isMealType(mealParam) ? mealParam : getDefaultMeal();
-  
+
+  // NL / review state
+  const [step, setStep] = useState<Step>('input');
+  const [nlText, setNlText] = useState('');
+  const [isParsing, setIsParsing] = useState(false);
+  const [parsedItems, setParsedItems] = useState<ParsedFoodItem[]>([]);
+  const [showManual, setShowManual] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+
+  // Manual search state
   const [activeTab, setActiveTab] = useState<TabType>('recent');
   const [searchQuery, setSearchQuery] = useState('');
   const [scannedProduct, setScannedProduct] = useState<OpenFoodFactsProduct | null>(null);
@@ -76,10 +90,12 @@ export default function LogFood() {
   const [apiSearchResults, setApiSearchResults] = useState<OpenFoodFactsProduct[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
   const { getRecentFoods, getFavorites, searchFoods, findByBarcode, addFood } = useFoods();
   const { settings } = useSettings();
-  
+  const { addEntry } = useEntries();
+
   const normalizedSearchQuery = useMemo(() => normalizeSearchQuery(searchQuery), [searchQuery]);
   const searchTerm = normalizedSearchQuery || searchQuery.trim();
   const recentFoods = getRecentFoods(20);
@@ -101,6 +117,9 @@ export default function LogFood() {
     { key: 'dinner', label: mealLabels.dinner },
     { key: 'snacks', label: mealLabels.snacks },
   ];
+
+  const hasSpeechRecognition = typeof window !== 'undefined' &&
+    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
   useEffect(() => {
     if (!mealParam || mealParam !== meal) {
@@ -136,9 +155,98 @@ export default function LogFood() {
     };
   }, [searchQuery, searchTerm]);
 
+  // NL handlers
+  const handleParseNLInput = async () => {
+    if (!nlText.trim()) return;
+    setIsParsing(true);
+    try {
+      const items = await parseFoodLog(nlText);
+      setParsedItems(items);
+      setStep('review');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to parse food');
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  const handleConfirmParsed = async () => {
+    setIsAdding(true);
+    const today = format(new Date(), 'yyyy-MM-dd');
+    try {
+      for (const item of parsedItems) {
+        await addEntry({
+          date: today,
+          meal,
+          foodName: item.name,
+          amountGrams: item.amountGrams,
+          computedMacros: item.macros,
+        });
+      }
+      toast.success(`Added ${parsedItems.length} item${parsedItems.length !== 1 ? 's' : ''} to ${mealLabels[meal]}`);
+      navigate('/', { state: { refreshEntries: true } });
+    } catch {
+      toast.error('Failed to add entries');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleRemoveParsedItem = (index: number) => {
+    setParsedItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAmountChange = (index: number, newGrams: number) => {
+    setParsedItems(prev => prev.map((item, i) => {
+      if (i !== index) return item;
+      const originalGrams = item.amountGrams;
+      if (originalGrams === 0) return { ...item, amountGrams: newGrams };
+      const ratio = newGrams / originalGrams;
+      return {
+        ...item,
+        amountGrams: newGrams,
+        macros: {
+          calories: Math.round(item.macros.calories * ratio),
+          protein: Math.round(item.macros.protein * ratio * 10) / 10,
+          carbs: Math.round(item.macros.carbs * ratio * 10) / 10,
+          fat: Math.round(item.macros.fat * ratio * 10) / 10,
+        },
+      };
+    }));
+  };
+
+  const handleVoiceInput = useCallback(() => {
+    if (!hasSpeechRecognition) return;
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognitionAPI = (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ||
+      (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript;
+      setNlText(prev => prev ? `${prev} ${transcript}` : transcript);
+    };
+
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [hasSpeechRecognition, isListening]);
+
+  // Manual search handlers
   const handleApiProductSelect = (product: OpenFoodFactsProduct) => {
     setScannedProduct(product);
-    setActiveTab('scan'); // Reuse the scan tab's preview UI
+    setActiveTab('scan');
   };
 
   const handleFoodSelect = (food: Food) => {
@@ -150,14 +258,12 @@ export default function LogFood() {
   };
 
   const handleBarcodeScan = async (barcode: string) => {
-    // First check if we already have this food saved
     const existingFood = findByBarcode(barcode);
     if (existingFood) {
       handleFoodSelect(existingFood);
       return;
     }
 
-    // Look up in Open Food Facts
     setIsLookingUp(true);
     const result = await fetchProductByBarcode(barcode);
     setIsLookingUp(false);
@@ -197,7 +303,6 @@ export default function LogFood() {
   const handleEditScannedProduct = () => {
     if (!scannedProduct) return;
     const foodData = convertToFoodData(scannedProduct);
-    // Navigate to food editor with pre-filled data
     const params = new URLSearchParams({
       barcode: foodData.barcode || '',
       name: foodData.name,
@@ -217,12 +322,157 @@ export default function LogFood() {
     { key: 'scan' as TabType, icon: ScanLine, label: 'Scan' },
   ];
 
+  // ── Review step ──────────────────────────────────────────────────────────
+  if (step === 'review') {
+    const totals = parsedItems.reduce(
+      (acc, item) => ({
+        calories: acc.calories + item.macros.calories,
+        protein: acc.protein + item.macros.protein,
+        carbs: acc.carbs + item.macros.carbs,
+        fat: acc.fat + item.macros.fat,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+
+    return (
+      <div className="min-h-screen bg-background pb-28">
+        {/* Review header */}
+        <div className="px-5 pt-12 pb-4 safe-top">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setStep('input')}
+              className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-sm"
+            >
+              <ArrowLeft className="w-5 h-5 text-foreground" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-foreground">Review Items</h1>
+              <p className="text-sm text-muted-foreground">
+                {parsedItems.length} item{parsedItems.length !== 1 ? 's' : ''} for {mealLabels[meal]}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <main className="px-4 space-y-3">
+          <AnimatePresence>
+            {parsedItems.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="bg-card rounded-2xl p-4 shadow-sm space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">{item.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveParsedItem(index)}
+                    className="w-7 h-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5"
+                  >
+                    <X className="w-3.5 h-3.5 text-muted-foreground" />
+                  </button>
+                </div>
+
+                {/* Macro chips */}
+                <div className="flex gap-2 flex-wrap">
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-calories/10 text-calories">
+                    {Math.round(item.macros.calories)} Cal
+                  </span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-protein/10 text-protein">
+                    {item.macros.protein}g P
+                  </span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-carbs/10 text-carbs">
+                    {item.macros.carbs}g C
+                  </span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-fat/10 text-fat">
+                    {item.macros.fat}g F
+                  </span>
+                </div>
+
+                {/* Amount editor */}
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground">Amount</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={item.amountGrams}
+                    onChange={(e) => handleAmountChange(index, Number(e.target.value))}
+                    className="w-20 text-sm text-center bg-muted rounded-lg px-2 py-1 border-0 focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <span className="text-xs text-muted-foreground">g</span>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {parsedItems.length === 0 && (
+            <div className="text-center py-12 bg-card rounded-2xl text-muted-foreground text-sm">
+              All items removed. Go back to re-parse.
+            </div>
+          )}
+
+          {/* Totals bar */}
+          {parsedItems.length > 0 && (
+            <div className="bg-card rounded-2xl p-4 shadow-sm">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Totals</p>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div>
+                  <div className="text-lg font-bold text-calories font-tabular">{Math.round(totals.calories)}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase">Cal</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-protein font-tabular">{Math.round(totals.protein * 10) / 10}g</div>
+                  <div className="text-[10px] text-muted-foreground uppercase">Protein</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-carbs font-tabular">{Math.round(totals.carbs * 10) / 10}g</div>
+                  <div className="text-[10px] text-muted-foreground uppercase">Carbs</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-fat font-tabular">{Math.round(totals.fat * 10) / 10}g</div>
+                  <div className="text-[10px] text-muted-foreground uppercase">Fat</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Sticky footer CTA */}
+        {parsedItems.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border pb-safe">
+            <Button
+              onClick={handleConfirmParsed}
+              disabled={isAdding}
+              className="w-full h-14 bg-gradient-primary text-white font-semibold text-base rounded-2xl"
+            >
+              {isAdding ? (
+                <><Loader2 className="w-5 h-5 animate-spin mr-2" />Adding…</>
+              ) : (
+                <>
+                  <Check className="w-5 h-5 mr-2" />
+                  Add {parsedItems.length} item{parsedItems.length !== 1 ? 's' : ''} to {mealLabels[meal]}
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ── Input step ───────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background pb-28">
       {/* Header */}
       <div className="px-5 pt-12 pb-4 safe-top">
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => navigate('/')}
             className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-sm"
           >
@@ -255,195 +505,257 @@ export default function LogFood() {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* NL input card */}
       <div className="px-4 pb-4">
-        <div className="flex gap-2 p-1 bg-card rounded-2xl shadow-sm">
-          {tabs.map(({ key, icon: Icon, label }) => (
-            <button
-              key={key}
-              onClick={() => {
-                setActiveTab(key);
-                setScannedProduct(null);
+        <div className="bg-card rounded-2xl shadow-sm p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">Describe what you ate</span>
+          </div>
+          <div className="relative">
+            <Textarea
+              placeholder="e.g. 'two scrambled eggs, bacon, and an OJ for breakfast'"
+              value={nlText}
+              onChange={(e) => setNlText(e.target.value)}
+              className="min-h-[88px] resize-none bg-muted/50 border-0 rounded-xl text-sm pr-12"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  handleParseNLInput();
+                }
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-sm transition-all ${
-                activeTab === key
-                  ? 'bg-gradient-primary text-white shadow-md'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
+            />
+            {hasSpeechRecognition && (
+              <button
+                onClick={handleVoiceInput}
+                className={`absolute right-3 bottom-3 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  isListening
+                    ? 'bg-destructive text-destructive-foreground'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
+          <Button
+            onClick={handleParseNLInput}
+            disabled={!nlText.trim() || isParsing}
+            className="w-full bg-gradient-primary"
+          >
+            {isParsing ? (
+              <><Loader2 className="w-4 h-4 animate-spin mr-2" />Parsing…</>
+            ) : (
+              <><Sparkles className="w-4 h-4 mr-2" />Parse</>
+            )}
+          </Button>
         </div>
       </div>
 
-      <main className="px-4">
-        <AnimatePresence mode="wait">
-          {/* Recent Tab */}
-          {activeTab === 'recent' && (
-            <motion.div
-              key="recent"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="space-y-5"
-            >
-              {/* Favorites */}
-              {favorites.length > 0 && (
-                <section>
-                  <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3 px-1">
-                    <Star className="w-4 h-4" />
-                    Favorites
-                  </h2>
-                  <div className="space-y-2">
-                    {favorites.slice(0, 5).map(food => (
-                      <FoodCard key={food.id} food={food} onClick={() => handleFoodSelect(food)} />
-                    ))}
-                  </div>
-                </section>
-              )}
+      {/* "Or find it manually" toggle */}
+      <div className="px-4 pb-3">
+        <button
+          onClick={() => setShowManual(prev => !prev)}
+          className="w-full flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {showManual ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {showManual ? 'Hide manual search' : 'Or find it manually'}
+        </button>
+      </div>
 
-              {/* Recent */}
-              <section>
-                <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3 px-1">
-                  <Clock className="w-4 h-4" />
-                  Recent
-                </h2>
-                {recentFoods.length > 0 ? (
-                  <div className="space-y-2">
-                    {recentFoods.map(food => (
-                      <FoodCard key={food.id} food={food} onClick={() => handleFoodSelect(food)} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-card rounded-2xl">
-                    <p className="text-muted-foreground mb-4">No foods logged yet</p>
-                    <Button onClick={handleCreateFood} className="bg-gradient-primary">
-                      Create Your First Food
-                    </Button>
-                  </div>
-                )}
-              </section>
-            </motion.div>
-          )}
-
-          {/* Search Tab */}
-          {activeTab === 'search' && (
-            <motion.div
-              key="search"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="space-y-4"
-            >
-              {/* Search input */}
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  placeholder="Search foods..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-12 bg-card rounded-2xl border-0 shadow-sm"
-                  autoFocus
-                />
-                {searchQuery && (
+      {/* Manual section */}
+      <AnimatePresence>
+        {showManual && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            {/* Tabs */}
+            <div className="px-4 pb-4">
+              <div className="flex gap-2 p-1 bg-card rounded-2xl shadow-sm">
+                {tabs.map(({ key, icon: Icon, label }) => (
                   <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2"
+                    key={key}
+                    onClick={() => {
+                      setActiveTab(key);
+                      setScannedProduct(null);
+                    }}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-sm transition-all ${
+                      activeTab === key
+                        ? 'bg-gradient-primary text-white shadow-md'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
                   >
-                    <X className="w-4 h-4 text-muted-foreground" />
+                    <Icon className="w-4 h-4" />
+                    {label}
                   </button>
-                )}
+                ))}
               </div>
+            </div>
 
-              {/* Results */}
-              {searchTerm.length >= 2 ? (
-                <div className="space-y-4">
-                  {/* Local library results */}
-                  {localSearchResults.length > 0 && (
+            <main className="px-4">
+              <AnimatePresence mode="wait">
+                {/* Recent Tab */}
+                {activeTab === 'recent' && (
+                  <motion.div
+                    key="recent"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="space-y-5"
+                  >
+                    {favorites.length > 0 && (
+                      <section>
+                        <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3 px-1">
+                          <Star className="w-4 h-4" />
+                          Favorites
+                        </h2>
+                        <div className="space-y-2">
+                          {favorites.slice(0, 5).map(food => (
+                            <FoodCard key={food.id} food={food} onClick={() => handleFoodSelect(food)} />
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
                     <section>
-                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-                        Your Library
-                      </h3>
-                      <div className="space-y-2">
-                        {localSearchResults.map(food => (
-                          <FoodCard key={food.id} food={food} onClick={() => handleFoodSelect(food)} />
-                        ))}
-                      </div>
+                      <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3 px-1">
+                        <Clock className="w-4 h-4" />
+                        Recent
+                      </h2>
+                      {recentFoods.length > 0 ? (
+                        <div className="space-y-2">
+                          {recentFoods.map(food => (
+                            <FoodCard key={food.id} food={food} onClick={() => handleFoodSelect(food)} />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 bg-card rounded-2xl">
+                          <p className="text-muted-foreground mb-4">No foods logged yet</p>
+                          <Button onClick={handleCreateFood} className="bg-gradient-primary">
+                            Create Your First Food
+                          </Button>
+                        </div>
+                      )}
                     </section>
-                  )}
+                  </motion.div>
+                )}
 
-                  {/* API search results */}
-                  <section>
-                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-                      Open Food Facts
-                    </h3>
-                    {isSearching ? (
-                      <div className="flex items-center justify-center py-8 bg-card rounded-2xl">
-                        <Loader2 className="w-5 h-5 animate-spin text-primary mr-2" />
-                        <span className="text-muted-foreground text-sm">Searching...</span>
-                      </div>
-                    ) : rankedApiResults.length > 0 ? (
-                      <div className="space-y-2">
-                        {rankedApiResults.map(product => (
-                          <ApiProductCard 
-                            key={product.code} 
-                            product={product} 
-                            onClick={() => handleApiProductSelect(product)} 
-                          />
-                        ))}
+                {/* Search Tab */}
+                {activeTab === 'search' && (
+                  <motion.div
+                    key="search"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="space-y-4"
+                  >
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        placeholder="Search foods..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-12 h-12 bg-card rounded-2xl border-0 shadow-sm"
+                        autoFocus
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-4 top-1/2 -translate-y-1/2"
+                        >
+                          <X className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      )}
+                    </div>
+
+                    {searchTerm.length >= 2 ? (
+                      <div className="space-y-4">
+                        {localSearchResults.length > 0 && (
+                          <section>
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+                              Your Library
+                            </h3>
+                            <div className="space-y-2">
+                              {localSearchResults.map(food => (
+                                <FoodCard key={food.id} food={food} onClick={() => handleFoodSelect(food)} />
+                              ))}
+                            </div>
+                          </section>
+                        )}
+
+                        <section>
+                          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+                            Open Food Facts
+                          </h3>
+                          {isSearching ? (
+                            <div className="flex items-center justify-center py-8 bg-card rounded-2xl">
+                              <Loader2 className="w-5 h-5 animate-spin text-primary mr-2" />
+                              <span className="text-muted-foreground text-sm">Searching...</span>
+                            </div>
+                          ) : rankedApiResults.length > 0 ? (
+                            <div className="space-y-2">
+                              {rankedApiResults.map(product => (
+                                <ApiProductCard
+                                  key={product.code}
+                                  product={product}
+                                  onClick={() => handleApiProductSelect(product)}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-6 bg-card rounded-2xl text-sm text-muted-foreground">
+                              No online results found
+                            </div>
+                          )}
+                        </section>
+
+                        <div className="pt-2">
+                          <Button onClick={handleCreateFood} variant="outline" className="w-full">
+                            Create New Food
+                          </Button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="text-center py-6 bg-card rounded-2xl text-sm text-muted-foreground">
-                        No online results found
+                      <div className="text-center py-12 text-muted-foreground bg-card rounded-2xl">
+                        Type at least 2 characters to search
                       </div>
                     )}
-                  </section>
+                  </motion.div>
+                )}
 
-                  {/* Create new option */}
-                  <div className="pt-2">
-                    <Button onClick={handleCreateFood} variant="outline" className="w-full">
-                      Create New Food
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground bg-card rounded-2xl">
-                  Type at least 2 characters to search
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* Scan Tab */}
-          {activeTab === 'scan' && (
-            <motion.div
-              key="scan"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="space-y-4"
-            >
-              {isLookingUp ? (
-                <div className="text-center py-12 bg-card rounded-2xl">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-                  <p className="text-muted-foreground">Looking up product...</p>
-                </div>
-              ) : scannedProduct ? (
-                <ScannedProductPreview
-                  product={scannedProduct}
-                  onConfirm={handleSaveScannedProduct}
-                  onEdit={handleEditScannedProduct}
-                  onCancel={() => setScannedProduct(null)}
-                />
-              ) : (
-                <BarcodeScanner onScan={handleBarcodeScan} />
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
+                {/* Scan Tab */}
+                {activeTab === 'scan' && (
+                  <motion.div
+                    key="scan"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="space-y-4"
+                  >
+                    {isLookingUp ? (
+                      <div className="text-center py-12 bg-card rounded-2xl">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+                        <p className="text-muted-foreground">Looking up product...</p>
+                      </div>
+                    ) : scannedProduct ? (
+                      <ScannedProductPreview
+                        product={scannedProduct}
+                        onConfirm={handleSaveScannedProduct}
+                        onEdit={handleEditScannedProduct}
+                        onCancel={() => setScannedProduct(null)}
+                      />
+                    ) : (
+                      <BarcodeScanner onScan={handleBarcodeScan} />
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </main>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <BottomNav />
     </div>
@@ -463,8 +775,7 @@ function ScannedProductPreview({
 }) {
   const nutriments = product.nutriments || {};
   const hasServingData = nutriments['energy-kcal_serving'] !== undefined;
-  
-  // Use serving data if available, otherwise fall back to per 100g
+
   const displayMacros = hasServingData ? {
     calories: Math.round(nutriments['energy-kcal_serving'] || 0),
     protein: Math.round(nutriments.proteins_serving || 0),
@@ -476,7 +787,7 @@ function ScannedProductPreview({
     carbs: Math.round(nutriments.carbohydrates_100g || 0),
     fat: Math.round(nutriments.fat_100g || 0),
   };
-  
+
   const displayLabel = hasServingData ? 'Per Serving' : 'Per 100g';
 
   return (
@@ -504,59 +815,34 @@ function ScannedProductPreview({
         </div>
       </div>
 
-      {/* Nutrition display */}
       <div className="bg-black/10 dark:bg-black/20 rounded-2xl p-4">
         <p className="text-xs text-muted-foreground dark:text-white/40 uppercase tracking-wider mb-3">
           {displayLabel}
         </p>
         <div className="grid grid-cols-4 gap-2 text-center">
           <div>
-            <div className="text-lg font-bold text-calories font-tabular">
-              {displayMacros.calories}
-            </div>
+            <div className="text-lg font-bold text-calories font-tabular">{displayMacros.calories}</div>
             <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Cal</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-protein font-tabular">
-              {displayMacros.protein}g
-            </div>
+            <div className="text-lg font-bold text-protein font-tabular">{displayMacros.protein}g</div>
             <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Protein</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-carbs font-tabular">
-              {displayMacros.carbs}g
-            </div>
+            <div className="text-lg font-bold text-carbs font-tabular">{displayMacros.carbs}g</div>
             <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Carbs</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-fat font-tabular">
-              {displayMacros.fat}g
-            </div>
+            <div className="text-lg font-bold text-fat font-tabular">{displayMacros.fat}g</div>
             <div className="text-[10px] text-muted-foreground dark:text-white/50 uppercase">Fat</div>
           </div>
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex gap-3">
-        <Button
-          variant="outline"
-          onClick={onCancel}
-          className="flex-1"
-        >
-          Scan Again
-        </Button>
-        <Button
-          variant="outline"
-          onClick={onEdit}
-          className="flex-1"
-        >
-          Edit
-        </Button>
-        <Button
-          onClick={onConfirm}
-          className="flex-1 bg-gradient-primary"
-        >
+        <Button variant="outline" onClick={onCancel} className="flex-1">Scan Again</Button>
+        <Button variant="outline" onClick={onEdit} className="flex-1">Edit</Button>
+        <Button onClick={onConfirm} className="flex-1 bg-gradient-primary">
           <Check className="w-4 h-4 mr-1" />
           Save
         </Button>
@@ -578,16 +864,15 @@ function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
       try {
         const { BrowserMultiFormatReader } = await import('@zxing/browser');
         const codeReader = new BrowserMultiFormatReader();
-        
+
         if (videoRef.current && isMounted) {
           controlsRef.current = await codeReader.decodeFromVideoDevice(
             undefined,
             videoRef.current,
-            (result, err) => {
+            (result) => {
               if (result && !hasScannedRef.current) {
                 hasScannedRef.current = true;
                 const barcode = result.getText();
-                // Stop the scanner
                 if (controlsRef.current) {
                   controlsRef.current.stop();
                 }
@@ -628,38 +913,32 @@ function BarcodeScanner({ onScan }: { onScan: (barcode: string) => void }) {
   return (
     <div className="space-y-4">
       <div className="relative aspect-[4/3] bg-card rounded-2xl overflow-hidden shadow-sm">
-        <video
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        {/* Scan overlay */}
+        <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-64 h-32 border-2 border-primary rounded-xl relative">
             <div className="absolute -top-1 left-4 right-4 h-0.5 bg-primary animate-pulse" />
           </div>
         </div>
       </div>
-      <p className="text-center text-sm text-muted-foreground">
-        Point your camera at a barcode
-      </p>
+      <p className="text-center text-sm text-muted-foreground">Point your camera at a barcode</p>
     </div>
   );
 }
 
-function ApiProductCard({ 
-  product, 
-  onClick 
-}: { 
-  product: OpenFoodFactsProduct; 
+function ApiProductCard({
+  product,
+  onClick,
+}: {
+  product: OpenFoodFactsProduct;
   onClick: () => void;
 }) {
   const nutriments = product.nutriments || {};
   const hasServingData = nutriments['energy-kcal_serving'] !== undefined;
-  
-  const displayCalories = hasServingData 
+
+  const displayCalories = hasServingData
     ? Math.round(nutriments['energy-kcal_serving'] || 0)
     : Math.round(nutriments['energy-kcal_100g'] || 0);
-  
+
   const displayLabel = hasServingData ? 'per serving' : 'per 100g';
 
   return (
