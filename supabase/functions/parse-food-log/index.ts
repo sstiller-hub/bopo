@@ -10,14 +10,6 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
   const { text } = await req.json()
   if (!text || typeof text !== 'string') {
     return new Response(JSON.stringify({ error: 'Missing text' }), {
