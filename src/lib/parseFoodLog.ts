@@ -16,6 +16,7 @@ export async function parseFoodLog(text: string): Promise<ParsedFoodItem[]> {
     headers: {
       'Content-Type': 'application/json',
       'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
     },
     body: JSON.stringify({ text }),
   })
